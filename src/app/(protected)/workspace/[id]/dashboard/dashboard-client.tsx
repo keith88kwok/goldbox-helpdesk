@@ -127,27 +127,17 @@ export default function DashboardClient({ workspace, userRole, stats }: Dashboar
                     </Card>
 
                     {/* Team Card */}
-                    <Card className="hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer sm:col-span-2 lg:col-span-1">
-                        <CardHeader className="pb-3">
-                            <div className="flex items-center">
-                                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 mr-3 flex-shrink-0" />
-                                <div className="min-w-0">
-                                    <CardTitle className="text-base sm:text-lg">Team</CardTitle>
-                                    <CardDescription className="text-sm">Manage workspace members</CardDescription>
-                                </div>
-                            </div>
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => router.push(`/workspace/${workspace.id}/team`)}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Team</CardTitle>
+                            <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
-                        <CardContent className="pt-0">
-                            <p className="text-sm text-gray-600 mb-4">
-                                Invite and manage team members.
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.teamMembers}</div>
+                            <p className="text-xs text-muted-foreground">
+                                Workspace members
                             </p>
-                            <Button
-                                className="w-full min-h-[44px]"
-                                disabled
-                                variant="outline"
-                            >
-                                Coming Soon
-                            </Button>
                         </CardContent>
                     </Card>
                 </div>

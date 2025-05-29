@@ -3,10 +3,11 @@ import {
     CognitoIdentityProviderClient,
     AdminCreateUserCommand,
     AdminSetUserPasswordCommand,
+    AdminGetUserCommand,
     MessageActionType
 } from '@aws-sdk/client-cognito-identity-provider';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 
 // Initialize AWS clients
 const cognitoClient = new CognitoIdentityProviderClient({
@@ -24,6 +25,8 @@ interface InviteUserResponse {
     userId?: string;
     message: string;
     error?: string;
+    isNewUser?: boolean;
+    isExistingWorkspaceMember?: boolean;
 }
 
 export const handler: Schema["inviteUser"]["functionHandler"] = async (event) => {
@@ -54,63 +57,144 @@ export const handler: Schema["inviteUser"]["functionHandler"] = async (event) =>
             throw new Error('USER_POOL_ID environment variable not set');
         }
 
-        // Step 1: Create user in Cognito
-        const createUserCommand = new AdminCreateUserCommand({
-            UserPoolId: userPoolId,
-            Username: username, // This is the email for login
-            UserAttributes: [
-                { Name: 'email', Value: email },
-                { Name: 'email_verified', Value: 'true' },
-                { Name: 'given_name', Value: givenName },
-                { Name: 'family_name', Value: familyName },
-                { Name: 'preferred_username', Value: preferredUsername }, // This is the display name
-            ],
-            TemporaryPassword: temporaryPassword || generateTemporaryPassword(),
-            MessageAction: sendInviteEmail ? MessageActionType.RESEND : MessageActionType.SUPPRESS,
-        });
-
-        const cognitoUser = await cognitoClient.send(createUserCommand);
-        const userId = cognitoUser.User?.Username;
-
-        if (!userId) {
-            throw new Error('Failed to create user in Cognito');
-        }
-
-        // Step 2: Create User record in DynamoDB directly
         const userTableName = process.env.USER_TABLE_NAME;
-        if (!userTableName) {
-            throw new Error('USER_TABLE_NAME environment variable not set');
-        }
+        const workspaceUserTableName = process.env.WORKSPACE_USER_TABLE_NAME;
         
-        const fullName = `${givenName} ${familyName}`;
-        const now = new Date().toISOString();
+        if (!userTableName || !workspaceUserTableName) {
+            throw new Error('Required table environment variables not set');
+        }
 
-        const userRecord = {
-            __typename: 'User',
-            id: userId,
-            userId: userId,
-            cognitoId: userId,
-            email: email,
-            username: preferredUsername, // Store the preferred username in our database
-            name: fullName,
-            createdAt: now,
-            updatedAt: now,
-        };
+        let userId: string;
+        let isNewUser = false;
+        let isExistingWorkspaceMember = false;
 
-        await docClient.send(new PutCommand({
-            TableName: userTableName,
-            Item: userRecord,
+        // Step 1: Check if user exists in Cognito
+        try {
+            const getUserCommand = new AdminGetUserCommand({
+                UserPoolId: userPoolId,
+                Username: username
+            });
+            
+            const existingCognitoUser = await cognitoClient.send(getUserCommand);
+            userId = existingCognitoUser.Username!;
+            
+            console.log(`User ${username} already exists in Cognito with ID: ${userId}`);
+            
+        } catch (error: any) {
+            if (error.name === 'UserNotFoundException') {
+                // User doesn't exist in Cognito - create new user
+                console.log(`User ${username} not found in Cognito, creating new user`);
+                
+                const createUserCommand = new AdminCreateUserCommand({
+                    UserPoolId: userPoolId,
+                    Username: username,
+                    UserAttributes: [
+                        { Name: 'email', Value: email },
+                        { Name: 'email_verified', Value: 'true' },
+                        { Name: 'given_name', Value: givenName },
+                        { Name: 'family_name', Value: familyName },
+                        { Name: 'preferred_username', Value: preferredUsername },
+                    ],
+                    TemporaryPassword: temporaryPassword || generateTemporaryPassword(),
+                    MessageAction: sendInviteEmail ? MessageActionType.RESEND : MessageActionType.SUPPRESS,
+                });
+
+                const cognitoUser = await cognitoClient.send(createUserCommand);
+                userId = cognitoUser.User?.Username!;
+                isNewUser = true;
+
+                if (!userId) {
+                    throw new Error('Failed to create user in Cognito');
+                }
+
+                // Set permanent password if provided
+                if (temporaryPassword) {
+                    const setPasswordCommand = new AdminSetUserPasswordCommand({
+                        UserPoolId: userPoolId,
+                        Username: username,
+                        Password: temporaryPassword,
+                        Permanent: false,
+                    });
+                    await cognitoClient.send(setPasswordCommand);
+                }
+            } else {
+                throw error; // Re-throw other errors
+            }
+        }
+
+        // Step 2: Check if user already exists in this workspace
+        const existingWorkspaceUser = await docClient.send(new GetCommand({
+            TableName: workspaceUserTableName,
+            Key: {
+                id: `${workspaceId}#${userId}`
+            }
         }));
 
-        // Step 3: Add user to workspace with specified role
-        const workspaceUserTableName = process.env.WORKSPACE_USER_TABLE_NAME;
-        if (!workspaceUserTableName) {
-            throw new Error('WORKSPACE_USER_TABLE_NAME environment variable not set');
+        if (existingWorkspaceUser.Item) {
+            return {
+                success: false,
+                message: `User ${preferredUsername} is already a member of this workspace with role: ${existingWorkspaceUser.Item.role}`,
+                isExistingWorkspaceMember: true,
+                userId
+            };
         }
-        
+
+        const now = new Date().toISOString();
+
+        // Step 3: Create or update User record in database if new user
+        if (isNewUser) {
+            const fullName = `${givenName} ${familyName}`;
+            const userRecord = {
+                __typename: 'User',
+                id: userId,
+                userId: userId,
+                cognitoId: userId,
+                email: email,
+                username: preferredUsername,
+                preferredUsername: preferredUsername,
+                name: fullName,
+                createdAt: now,
+                updatedAt: now,
+            };
+
+            await docClient.send(new PutCommand({
+                TableName: userTableName,
+                Item: userRecord,
+            }));
+        } else {
+            // For existing users, verify User record exists in database
+            const existingUser = await docClient.send(new GetCommand({
+                TableName: userTableName,
+                Key: { id: userId }
+            }));
+
+            if (!existingUser.Item) {
+                // Create User record for existing Cognito user (edge case)
+                const fullName = `${givenName} ${familyName}`;
+                const userRecord = {
+                    __typename: 'User',
+                    id: userId,
+                    userId: userId,
+                    cognitoId: userId,
+                    email: email,
+                    username: preferredUsername,
+                    preferredUsername: preferredUsername,
+                    name: fullName,
+                    createdAt: now,
+                    updatedAt: now,
+                };
+
+                await docClient.send(new PutCommand({
+                    TableName: userTableName,
+                    Item: userRecord,
+                }));
+            }
+        }
+
+        // Step 4: Add user to workspace with specified role
         const workspaceUserRecord = {
             __typename: 'WorkspaceUser',
-            id: `${workspaceId}#${userId}`, // Composite key
+            id: `${workspaceId}#${userId}`,
             workspaceId: workspaceId,
             userId: userId,
             role: role,
@@ -124,22 +208,14 @@ export const handler: Schema["inviteUser"]["functionHandler"] = async (event) =>
             Item: workspaceUserRecord,
         }));
 
-        // Step 4: Set permanent password if provided
-        if (temporaryPassword) {
-            const setPasswordCommand = new AdminSetUserPasswordCommand({
-                UserPoolId: userPoolId,
-                Username: username, // Use email for login
-                Password: temporaryPassword,
-                Permanent: false, // User will need to change on first login
-            });
-
-            await cognitoClient.send(setPasswordCommand);
-        }
-
         const response: InviteUserResponse = {
             success: true,
             userId: userId,
-            message: `User ${preferredUsername} (${username}) successfully invited and added to workspace`,
+            message: isNewUser 
+                ? `New user ${preferredUsername} (${username}) successfully created and added to workspace with role: ${role}`
+                : `Existing user ${preferredUsername} (${username}) successfully added to workspace with role: ${role}`,
+            isNewUser,
+            isExistingWorkspaceMember: false
         };
 
         return response;
