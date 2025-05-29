@@ -87,7 +87,7 @@ export function DropdownMenuContent({
 
     return (
         <div 
-            className={`absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-white p-1 shadow-md ${
+            className={`absolute z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white p-1 shadow-lg ${
                 align === 'end' ? 'right-0' : 'left-0'
             } top-full mt-1`}
         >
@@ -119,14 +119,14 @@ export function DropdownMenuItem({
     if (asChild && React.isValidElement(children)) {
         return React.cloneElement(children as any, {
             onClick: handleClick,
-            className: "block px-2 py-1.5 text-sm hover:bg-gray-100 rounded w-full text-left cursor-pointer"
+            className: "block px-3 py-2 text-sm hover:bg-gray-100 rounded w-full text-left cursor-pointer text-gray-900"
         });
     }
 
     return (
         <button
             onClick={handleClick}
-            className="block w-full px-2 py-1.5 text-sm text-left hover:bg-gray-100 rounded cursor-pointer"
+            className="block w-full px-3 py-2 text-sm text-left hover:bg-gray-100 rounded cursor-pointer text-gray-900"
         >
             {children}
         </button>

@@ -54,24 +54,24 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
             {/* Header */}
             <div className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 sm:py-0 sm:h-16 gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => router.push(`/workspace/${workspaceId}/kiosks`)}
-                                className="mr-4"
+                                className="w-fit sm:w-auto"
                             >
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Back to Kiosks
                             </Button>
                             <div className="flex items-center">
-                                <Building2 className="h-6 w-6 text-blue-600 mr-3" />
+                                <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2 sm:mr-3" />
                                 <div>
-                                    <h1 className="text-xl font-semibold text-gray-900">
+                                    <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
                                         Kiosk Details
                                     </h1>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-xs sm:text-sm text-gray-600">
                                         {workspace.name}
                                     </p>
                                 </div>
@@ -80,7 +80,7 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
                         {canEditKiosk && (
                             <Button
                                 onClick={() => router.push(`/workspace/${workspaceId}/kiosks/${kiosk.id}/edit`)}
-                                className="flex items-center"
+                                className="w-full sm:w-auto flex items-center justify-center"
                             >
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit Kiosk
@@ -91,24 +91,24 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
             </div>
 
             {/* Main Content */}
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="space-y-6">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+                <div className="space-y-4 sm:space-y-6">
                     {/* Header Info */}
                     <Card>
-                        <CardHeader>
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                    <div className="flex items-center mb-2">
-                                        <MapPin className="h-5 w-5 text-gray-500 mr-2" />
-                                        <CardTitle className="text-2xl">
+                        <CardHeader className="pb-3 sm:pb-6">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex flex-col sm:flex-row sm:items-center mb-2 gap-2">
+                                        <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0" />
+                                        <CardTitle className="text-lg sm:text-2xl line-clamp-2">
                                             {kiosk.address || 'No address'}
                                         </CardTitle>
                                     </div>
-                                    <CardDescription className="text-lg">
+                                    <CardDescription className="text-sm sm:text-lg">
                                         {kiosk.locationDescription || 'No location description provided'}
                                     </CardDescription>
                                 </div>
-                                <div className="ml-4">
+                                <div className="flex-shrink-0">
                                     {getStatusBadge(kiosk.status)}
                                 </div>
                             </div>
@@ -116,33 +116,33 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
                     </Card>
 
                     {/* Details Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                         {/* Basic Information */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center">
-                                    <FileText className="h-5 w-5 mr-2" />
+                            <CardHeader className="pb-3">
+                                <CardTitle className="flex items-center text-base sm:text-lg">
+                                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                                     Basic Information
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-3 sm:space-y-4">
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Kiosk ID</label>
-                                    <p className="text-sm text-gray-600 font-mono">{kiosk.kioskId}</p>
+                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Kiosk ID</label>
+                                    <p className="text-sm text-gray-600 font-mono break-all">{kiosk.kioskId}</p>
                                 </div>
                                 
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Address</label>
-                                    <p className="text-sm text-gray-900">{kiosk.address || 'Not provided'}</p>
+                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Address</label>
+                                    <p className="text-sm text-gray-900 break-words">{kiosk.address || 'Not provided'}</p>
                                 </div>
                                 
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Location Description</label>
-                                    <p className="text-sm text-gray-900">{kiosk.locationDescription || 'Not provided'}</p>
+                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Location Description</label>
+                                    <p className="text-sm text-gray-900 break-words">{kiosk.locationDescription || 'Not provided'}</p>
                                 </div>
                                 
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Status</label>
+                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Status</label>
                                     <div className="mt-1">
                                         {getStatusBadge(kiosk.status)}
                                     </div>
@@ -152,23 +152,23 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
 
                         {/* Additional Details */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center">
-                                    <FileText className="h-5 w-5 mr-2" />
+                            <CardHeader className="pb-3">
+                                <CardTitle className="flex items-center text-base sm:text-lg">
+                                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                                     Additional Details
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-3 sm:space-y-4">
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Description</label>
-                                    <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Description</label>
+                                    <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">
                                         {kiosk.description || 'No description provided'}
                                     </p>
                                 </div>
                                 
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Remarks</label>
-                                    <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Remarks</label>
+                                    <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">
                                         {kiosk.remark || 'No remarks'}
                                     </p>
                                 </div>
@@ -177,16 +177,16 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
 
                         {/* Metadata */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center">
-                                    <Calendar className="h-5 w-5 mr-2" />
+                            <CardHeader className="pb-3">
+                                <CardTitle className="flex items-center text-base sm:text-lg">
+                                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                                     Record Information
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-3 sm:space-y-4">
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Created</label>
-                                    <p className="text-sm text-gray-900">
+                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Created</label>
+                                    <p className="text-sm text-gray-900 break-words">
                                         {kiosk.createdAt 
                                             ? new Date(kiosk.createdAt).toLocaleDateString('en-US', {
                                                 year: 'numeric',
@@ -201,8 +201,8 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
                                 </div>
                                 
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Last Updated</label>
-                                    <p className="text-sm text-gray-900">
+                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Last Updated</label>
+                                    <p className="text-sm text-gray-900 break-words">
                                         {kiosk.updatedAt 
                                             ? new Date(kiosk.updatedAt).toLocaleDateString('en-US', {
                                                 year: 'numeric',
@@ -220,8 +220,8 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
 
                         {/* Placeholder for future features */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Maintenance History</CardTitle>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-base sm:text-lg">Maintenance History</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <p className="text-sm text-gray-500">No maintenance records yet</p>
@@ -232,9 +232,9 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
 
                     {/* Location Photos & Documents */}
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Location Photos & Documents</CardTitle>
-                            <CardDescription>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base sm:text-lg">Location Photos & Documents</CardTitle>
+                            <CardDescription className="text-sm">
                                 Upload and manage photos and documents for this kiosk location
                             </CardDescription>
                         </CardHeader>
@@ -250,10 +250,11 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
                     </Card>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center justify-between pt-6 border-t">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 sm:pt-6 border-t gap-3">
                         <Button
                             variant="outline"
                             onClick={() => router.push(`/workspace/${workspaceId}/kiosks`)}
+                            className="w-full sm:w-auto"
                         >
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Back to Kiosks
@@ -262,6 +263,7 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
                         {canEditKiosk && (
                             <Button
                                 onClick={() => router.push(`/workspace/${workspaceId}/kiosks/${kiosk.id}/edit`)}
+                                className="w-full sm:w-auto"
                             >
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit Kiosk

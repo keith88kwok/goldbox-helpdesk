@@ -156,12 +156,12 @@ export function FileUploadZone({
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
                 className={`
-          relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all
+          relative border-2 border-dashed rounded-lg p-4 sm:p-6 text-center cursor-pointer transition-all min-h-[120px] sm:min-h-[140px]
           ${isDragOver
                         ? 'border-blue-400 bg-blue-50'
                         : 'border-gray-300 hover:border-gray-400'
                     }
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 active:bg-gray-100'}
           ${uploading ? 'pointer-events-none' : ''}
         `}
             >
@@ -178,16 +178,19 @@ export function FileUploadZone({
                 />
 
                 <div className="space-y-2">
-                    <Upload className={`mx-auto h-8 w-8 ${isDragOver ? 'text-blue-500' : 'text-gray-400'}`} />
+                    <Upload className={`mx-auto h-6 w-6 sm:h-8 sm:w-8 ${isDragOver ? 'text-blue-500' : 'text-gray-400'}`} />
                     <div>
                         <p className="text-sm font-medium text-gray-700">
-                            {isDragOver ? 'Drop files here' : 'Click to upload or drag and drop'}
+                            {isDragOver ? 'Drop files here' : 'Tap to upload or drag and drop'}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
                             Images (up to 5MB) or Documents (up to 10MB)
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-gray-400 mt-1 hidden sm:block">
                             Supported: JPG, PNG, GIF, WebP, PDF, DOC, DOCX, TXT, CSV
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1 sm:hidden">
+                            JPG, PNG, PDF, DOC supported
                         </p>
                     </div>
                 </div>
@@ -195,15 +198,15 @@ export function FileUploadZone({
 
             {/* Validation Error */}
             {validationError && (
-                <div className="flex items-center space-x-2 text-red-600 text-sm">
-                    <AlertCircle className="h-4 w-4" />
+                <div className="flex items-start space-x-2 text-red-600 text-sm p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <span>{validationError}</span>
                 </div>
             )}
 
             {/* Upload Progress */}
             {uploadProgress.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                     <h4 className="text-sm font-medium text-gray-700">Uploading files...</h4>
                     {uploadProgress.map((progress) => {
                         const FileIcon = getFileIcon(progress.filename.split('.').pop() || '');
@@ -211,21 +214,21 @@ export function FileUploadZone({
                         return (
                             <div key={progress.id} className="border rounded-lg p-3">
                                 <div className="flex items-center space-x-3">
-                                    <FileIcon className="h-5 w-5 text-gray-500" />
+                                    <FileIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-gray-700 truncate">
                                             {progress.filename}
                                         </p>
 
                                         {progress.status === 'uploading' && (
-                                            <div className="mt-1">
-                                                <div className="flex items-center justify-between text-xs text-gray-500">
+                                            <div className="mt-2">
+                                                <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                                                     <span>Uploading...</span>
                                                     <span>{Math.round(progress.progress)}%</span>
                                                 </div>
-                                                <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
                                                     <div
-                                                        className={`h-1.5 rounded-full transition-all ${getProgressColor(progress.status)}`}
+                                                        className={`h-2 rounded-full transition-all ${getProgressColor(progress.status)}`}
                                                         style={{ width: `${progress.progress}%` }}
                                                     />
                                                 </div>

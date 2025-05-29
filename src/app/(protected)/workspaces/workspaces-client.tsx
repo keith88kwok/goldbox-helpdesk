@@ -118,26 +118,26 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
+                <div className="mb-6 sm:mb-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Your Workspaces</h1>
-                            <p className="mt-2 text-gray-600">
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Your Workspaces</h1>
+                            <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
                                 Select a workspace to access kiosks and tickets
                             </p>
                         </div>
 
                         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                             <DialogTrigger asChild>
-                                <Button>
+                                <Button className="w-full sm:w-auto">
                                     <Plus className="h-4 w-4 mr-2" />
                                     Create Workspace
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent>
+                            <DialogContent className="w-[95vw] max-w-md mx-auto">
                                 <form onSubmit={handleCreateWorkspace}>
                                     <DialogHeader>
                                         <DialogTitle>Create New Workspace</DialogTitle>
@@ -155,6 +155,7 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
                                                 onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
                                                 placeholder="Enter workspace name"
                                                 required
+                                                className="text-base" /* Prevent iOS zoom */
                                             />
                                         </div>
                                         <div className="grid gap-2">
@@ -165,20 +166,26 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
                                                 onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
                                                 placeholder="Describe this workspace"
                                                 rows={3}
+                                                className="text-base" /* Prevent iOS zoom */
                                             />
                                         </div>
                                     </div>
 
-                                    <DialogFooter>
+                                    <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
                                         <Button
                                             type="button"
                                             variant="outline"
                                             onClick={() => setIsCreateModalOpen(false)}
                                             disabled={isCreating}
+                                            className="w-full sm:w-auto"
                                         >
                                             Cancel
                                         </Button>
-                                        <Button type="submit" disabled={isCreating || !createForm.name.trim()}>
+                                        <Button 
+                                            type="submit" 
+                                            disabled={isCreating || !createForm.name.trim()}
+                                            className="w-full sm:w-auto"
+                                        >
                                             {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                                             Create Workspace
                                         </Button>
@@ -191,15 +198,15 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
 
                 {/* Workspaces Grid */}
                 {userWorkspaces.length === 0 ? (
-                    <div className="text-center py-12">
-                        <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <div className="text-center py-8 sm:py-12 px-4">
+                        <Building2 className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No workspaces found</h3>
-                        <p className="text-gray-600 mb-6">
+                        <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-md mx-auto">
                             You don't have access to any workspaces yet. Create your first workspace to get started.
                         </p>
                         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                             <DialogTrigger asChild>
-                                <Button>
+                                <Button className="w-full sm:w-auto">
                                     <Plus className="h-4 w-4 mr-2" />
                                     Create Your First Workspace
                                 </Button>
@@ -207,35 +214,35 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
                         </Dialog>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         {userWorkspaces.map((userWorkspace) => (
                             <Card
                                 key={userWorkspace.workspace.id}
-                                className="hover:shadow-lg transition-shadow cursor-pointer"
+                                className="hover:shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98]"
                                 onClick={() => handleWorkspaceSelect(userWorkspace.workspace.id)}
                             >
-                                <CardHeader>
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <CardTitle className="text-lg mb-1">
+                                <CardHeader className="pb-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex-1 min-w-0">
+                                            <CardTitle className="text-base sm:text-lg mb-1 truncate">
                                                 {userWorkspace.workspace.name}
                                             </CardTitle>
-                                            <CardDescription>
+                                            <CardDescription className="text-sm line-clamp-2">
                                                 {userWorkspace.workspace.description || 'No description'}
                                             </CardDescription>
-                                            <CardDescription className="mt-1">
+                                            <CardDescription className="mt-1 text-xs">
                                                 Joined {new Date(userWorkspace.joinedAt).toLocaleDateString()}
                                             </CardDescription>
                                         </div>
-                                        <Badge className={getRoleBadgeColor(userWorkspace.role)}>
+                                        <Badge className={`${getRoleBadgeColor(userWorkspace.role)} flex-shrink-0 text-xs`}>
                                             {userWorkspace.role}
                                         </Badge>
                                     </div>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <Users className="h-4 w-4 mr-1" />
-                                        <span>Click to access workspace</span>
+                                <CardContent className="pt-0">
+                                    <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                                        <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                                        <span>Tap to access workspace</span>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -244,8 +251,8 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
                 )}
 
                 {/* User Info */}
-                <div className="mt-12 pt-8 border-t border-gray-200">
-                    <div className="text-center text-sm text-gray-600">
+                <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
+                    <div className="text-center text-xs sm:text-sm text-gray-600 px-4">
                         Logged in as {user.name} ({user.email})
                     </div>
                 </div>

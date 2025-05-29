@@ -72,42 +72,42 @@ export default function KiosksClient({ kiosks, workspace, userRole }: KiosksClie
             {/* Header */}
             <div className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 sm:py-0 sm:h-16 gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => router.push(`/workspace/${workspace.id}/dashboard`)}
-                                className="mr-4"
+                                className="w-fit sm:w-auto"
                             >
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Back to Dashboard
                             </Button>
                             <div className="flex items-center">
-                                <Building2 className="h-6 w-6 text-blue-600 mr-3" />
+                                <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2 sm:mr-3" />
                                 <div>
-                                    <h1 className="text-xl font-semibold text-gray-900">
+                                    <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
                                         Kiosks
                                     </h1>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-xs sm:text-sm text-gray-600">
                                         {workspace.name}
                                     </p>
                                 </div>
                             </div>
                         </div>
                         {canEditKiosks && (
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                                 <Button
                                     variant="outline"
                                     onClick={() => setShowImportModal(true)}
-                                    className="flex items-center"
+                                    className="w-full sm:w-auto flex items-center justify-center"
                                 >
                                     <Upload className="h-4 w-4 mr-2" />
                                     Import Kiosks
                                 </Button>
                                 <Button
                                     onClick={() => router.push(`/workspace/${workspace.id}/kiosks/new`)}
-                                    className="flex items-center"
+                                    className="w-full sm:w-auto flex items-center justify-center"
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
                                     Add Kiosk
@@ -119,30 +119,30 @@ export default function KiosksClient({ kiosks, workspace, userRole }: KiosksClie
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
                 {/* Search and Filter Bar */}
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
                             placeholder="Search kiosks by address, location, or description..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 text-base" /* Prevent iOS zoom */
                         />
                     </div>
                 </div>
 
                 {/* Empty State */}
                 {filteredKiosks.length === 0 && kiosks.length === 0 && (
-                    <div className="text-center py-12">
-                        <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No kiosks yet</h3>
-                        <p className="text-gray-600 mb-6">
+                    <div className="text-center py-8 sm:py-12 px-4">
+                        <Building2 className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No kiosks yet</h3>
+                        <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 max-w-md mx-auto">
                             Get started by adding your first kiosk to this workspace.
                         </p>
                         {canEditKiosks && (
-                            <Button onClick={() => router.push(`/workspace/${workspace.id}/kiosks/new`)}>
+                            <Button onClick={() => router.push(`/workspace/${workspace.id}/kiosks/new`)} className="w-full sm:w-auto">
                                 <Plus className="h-4 w-4 mr-2" />
                                 Add First Kiosk
                             </Button>
@@ -152,15 +152,16 @@ export default function KiosksClient({ kiosks, workspace, userRole }: KiosksClie
 
                 {/* No Search Results */}
                 {filteredKiosks.length === 0 && kiosks.length > 0 && (
-                    <div className="text-center py-12">
-                        <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
-                        <p className="text-gray-600 mb-4">
+                    <div className="text-center py-8 sm:py-12 px-4">
+                        <Search className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No results found</h3>
+                        <p className="text-sm sm:text-base text-gray-600 mb-4 max-w-md mx-auto">
                             Try adjusting your search terms.
                         </p>
                         <Button
                             variant="outline"
                             onClick={() => setSearchTerm('')}
+                            className="w-full sm:w-auto"
                         >
                             Clear Search
                         </Button>
@@ -170,45 +171,45 @@ export default function KiosksClient({ kiosks, workspace, userRole }: KiosksClie
                 {/* Kiosks Grid */}
                 {filteredKiosks.length > 0 && (
                     <>
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg font-medium text-gray-900">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-2">
+                            <h2 className="text-base sm:text-lg font-medium text-gray-900">
                                 {filteredKiosks.length} kiosk{filteredKiosks.length !== 1 ? 's' : ''} found
                                 {searchTerm && ` for "${searchTerm}"`}
                             </h2>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                             {filteredKiosks.map((kiosk) => (
                                 <Card
                                     key={kiosk.id}
-                                    className="hover:shadow-lg transition-shadow cursor-pointer"
+                                    className="hover:shadow-lg transition-all cursor-pointer active:scale-[0.98]"
                                     onClick={() => router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}`)}
                                 >
-                                    <CardHeader>
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1">
+                                    <CardHeader className="pb-3">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex-1 min-w-0">
                                                 <div className="flex items-center mb-2">
-                                                    <MapPin className="h-4 w-4 text-gray-500 mr-2" />
-                                                    <CardTitle className="text-lg font-medium line-clamp-1">
+                                                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 mr-2 flex-shrink-0" />
+                                                    <CardTitle className="text-base sm:text-lg font-medium line-clamp-1">
                                                         {kiosk.address || 'No address'}
                                                     </CardTitle>
                                                 </div>
-                                                <CardDescription className="line-clamp-2">
+                                                <CardDescription className="text-sm line-clamp-2">
                                                     {kiosk.locationDescription || 'No location description'}
                                                 </CardDescription>
                                             </div>
-                                            <div className="ml-2">
+                                            <div className="flex-shrink-0">
                                                 {getStatusBadge(kiosk.status)}
                                             </div>
                                         </div>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="pt-0">
                                         {kiosk.description && (
                                             <p className="text-sm text-gray-600 mb-4 line-clamp-3">
                                                 {kiosk.description}
                                             </p>
                                         )}
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                             <span className="text-xs text-gray-500">
                                                 Added {new Date(kiosk.createdAt || '').toLocaleDateString()}
                                             </span>
@@ -220,6 +221,7 @@ export default function KiosksClient({ kiosks, workspace, userRole }: KiosksClie
                                                         e.stopPropagation();
                                                         router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}/edit`);
                                                     }}
+                                                    className="w-full sm:w-auto min-h-[44px] flex items-center justify-center"
                                                 >
                                                     <Settings className="h-3 w-3 mr-1" />
                                                     Edit
@@ -231,6 +233,15 @@ export default function KiosksClient({ kiosks, workspace, userRole }: KiosksClie
                             ))}
                         </div>
                     </>
+                )}
+
+                {/* Summary */}
+                {filteredKiosks.length > 0 && (
+                    <div className="mt-6 sm:mt-8 text-center text-gray-500 px-4">
+                        <p className="text-sm">
+                            Showing {filteredKiosks.length} of {kiosks.length} kiosks
+                        </p>
+                    </div>
                 )}
             </div>
 

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, AlertCircle, Calendar, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Search, AlertCircle, Calendar, User, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -30,6 +31,7 @@ export default function TicketsClient({
 }: TicketsClientProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
+    const router = useRouter();
 
     // Filter tickets based on search and status
     const filteredTickets = tickets.filter(ticket => {
@@ -52,39 +54,55 @@ export default function TicketsClient({
     const canCreateTicket = userRole === 'ADMIN' || userRole === 'MEMBER';
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-4 sm:py-8">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Tickets</h1>
-                    <p className="text-gray-600 mt-1">Manage maintenance tickets for {workspace.name}</p>
+            <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+                {/* Navigation */}
+                <div className="flex items-center">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/workspace/${workspace.id}/dashboard`)}
+                        className="w-fit"
+                    >
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back to Dashboard
+                    </Button>
                 </div>
-                {canCreateTicket && (
-                    <Link href={`/workspace/${workspace.id}/tickets/new`}>
-                        <Button>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Create Ticket
-                        </Button>
-                    </Link>
-                )}
+                
+                {/* Title and Create Button */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tickets</h1>
+                        <p className="text-sm sm:text-base text-gray-600 mt-1">Manage maintenance tickets for {workspace.name}</p>
+                    </div>
+                    {canCreateTicket && (
+                        <Link href={`/workspace/${workspace.id}/tickets/new`} className="w-full sm:w-auto">
+                            <Button className="w-full sm:w-auto">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Create Ticket
+                            </Button>
+                        </Link>
+                    )}
+                </div>
             </div>
 
             {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="relative flex-1">
+            <div className="flex flex-col gap-3 mb-6">
+                <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
                         placeholder="Search tickets by title or description..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 text-base" /* Prevent iOS zoom */
                     />
                 </div>
-                <div className="flex gap-2">
+                <div className="w-full">
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     >
                         <option value="ALL">All Statuses</option>
                         <option value="OPEN">Open</option>
@@ -98,20 +116,20 @@ export default function TicketsClient({
             {/* Tickets Grid */}
             {filteredTickets.length === 0 ? (
                 <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                        <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
+                        <AlertCircle className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-4" />
+                        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2 text-center">
                             {searchTerm || statusFilter !== 'ALL' ? 'No matching tickets' : 'No tickets found'}
                         </h3>
-                        <p className="text-gray-500 text-center mb-4">
+                        <p className="text-sm sm:text-base text-gray-500 text-center mb-4 max-w-md">
                             {searchTerm || statusFilter !== 'ALL'
                                 ? 'Try adjusting your search or filters'
                                 : 'Get started by creating your first maintenance ticket'
                             }
                         </p>
                         {canCreateTicket && !searchTerm && statusFilter === 'ALL' && (
-                            <Link href={`/workspace/${workspace.id}/tickets/new`}>
-                                <Button>
+                            <Link href={`/workspace/${workspace.id}/tickets/new`} className="w-full sm:w-auto">
+                                <Button className="w-full sm:w-auto">
                                     <Plus className="h-4 w-4 mr-2" />
                                     Create First Ticket
                                 </Button>
@@ -120,64 +138,62 @@ export default function TicketsClient({
                     </CardContent>
                 </Card>
             ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {filteredTickets.map((ticket) => (
-                        <Card key={ticket.id} className="hover:shadow-lg transition-shadow">
+                        <Card key={ticket.id} className="hover:shadow-lg transition-all active:scale-[0.98]">
                             <CardHeader className="pb-3">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
                                         <Badge
                                             variant="secondary"
-                                            className={`${statusColors[ticket.status as keyof typeof statusColors] || statusColors.OPEN} mb-2`}
+                                            className={`${statusColors[ticket.status as keyof typeof statusColors] || statusColors.OPEN} mb-2 text-xs`}
                                         >
                                             {ticket.status || 'OPEN'}
                                         </Badge>
-                                        <h3 className="font-semibold text-lg line-clamp-2">
+                                        <h3 className="font-semibold text-base sm:text-lg line-clamp-2">
                                             {ticket.title}
                                         </h3>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="flex flex-col gap-1 flex-shrink-0">
                                         <Link
                                             href={`/workspace/${workspace.id}/tickets/${ticket.id}`}
-                                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                            className="text-blue-600 hover:text-blue-800 text-sm font-medium min-h-[44px] flex items-center justify-center px-2"
                                         >
                                             View
                                         </Link>
                                         {(userRole === 'ADMIN' || userRole === 'MEMBER') && (
-                                            <div className="mt-1">
-                                                <Link
-                                                    href={`/workspace/${workspace.id}/tickets/${ticket.id}/edit`}
-                                                    className="text-gray-600 hover:text-gray-800 text-sm"
-                                                >
-                                                    Edit
-                                                </Link>
-                                            </div>
+                                            <Link
+                                                href={`/workspace/${workspace.id}/tickets/${ticket.id}/edit`}
+                                                className="text-gray-600 hover:text-gray-800 text-sm min-h-[44px] flex items-center justify-center px-2"
+                                            >
+                                                Edit
+                                            </Link>
                                         )}
                                     </div>
                                 </div>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="pt-0">
                                 <p className="text-gray-600 text-sm mb-4 line-clamp-3">
                                     {ticket.description}
                                 </p>
 
-                                <div className="space-y-2 text-sm text-gray-500">
+                                <div className="space-y-2 text-xs sm:text-sm text-gray-500">
                                     <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>Reported: {formatDate(ticket.reportedDate)}</span>
+                                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                                        <span className="truncate">Reported: {formatDate(ticket.reportedDate)}</span>
                                     </div>
 
                                     {ticket.assigneeId && (
                                         <div className="flex items-center gap-2">
-                                            <User className="h-4 w-4" />
+                                            <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                                             <span>Assigned</span>
                                         </div>
                                     )}
 
                                     {ticket.updatedDate && (
                                         <div className="flex items-center gap-2">
-                                            <Calendar className="h-4 w-4" />
-                                            <span>Updated: {formatDate(ticket.updatedDate)}</span>
+                                            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                                            <span className="truncate">Updated: {formatDate(ticket.updatedDate)}</span>
                                         </div>
                                     )}
                                 </div>
@@ -185,7 +201,7 @@ export default function TicketsClient({
                                 <div className="mt-4 pt-4 border-t">
                                     <Link
                                         href={`/workspace/${workspace.id}/tickets/${ticket.id}`}
-                                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                        className="text-blue-600 hover:text-blue-800 text-sm font-medium block min-h-[44px] flex items-center"
                                     >
                                         View Details →
                                     </Link>
@@ -197,8 +213,8 @@ export default function TicketsClient({
             )}
 
             {/* Summary */}
-            <div className="mt-8 text-center text-gray-500">
-                <p>
+            <div className="mt-6 sm:mt-8 text-center text-gray-500 px-4">
+                <p className="text-sm">
                     Showing {filteredTickets.length} of {tickets.length} tickets
                 </p>
             </div>

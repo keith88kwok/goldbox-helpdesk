@@ -69,33 +69,33 @@ export default function TicketDetailClient({
             {/* Header */}
             <div className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between py-4 sm:py-0 sm:h-16 gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => router.push(`/workspace/${workspaceId}/tickets`)}
-                                className="mr-4"
+                                className="w-fit sm:w-auto"
                             >
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Back to Tickets
                             </Button>
-                            <div className="flex items-center">
-                                <Ticket className="h-6 w-6 text-green-600 mr-3" />
-                                <div>
-                                    <h1 className="text-xl font-semibold text-gray-900">
+                            <div className="flex items-center min-w-0">
+                                <Ticket className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 mr-2 sm:mr-3 flex-shrink-0" />
+                                <div className="min-w-0">
+                                    <h1 className="text-base sm:text-xl font-semibold text-gray-900 line-clamp-1">
                                         {ticket.title}
                                     </h1>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-xs sm:text-sm text-gray-600 line-clamp-1">
                                         Ticket #{ticket.ticketId} - {workspace.name}
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                             <Badge 
                                 variant="secondary" 
-                                className={statusColors[ticket.status as keyof typeof statusColors] || statusColors.OPEN}
+                                className={`${statusColors[ticket.status as keyof typeof statusColors] || statusColors.OPEN} text-xs`}
                             >
                                 {ticket.status || 'OPEN'}
                             </Badge>
@@ -103,6 +103,7 @@ export default function TicketDetailClient({
                                 <Button
                                     onClick={() => router.push(`/workspace/${workspaceId}/tickets/${ticket.id}/edit`)}
                                     size="sm"
+                                    className="w-full sm:w-auto"
                                 >
                                     <Edit className="h-4 w-4 mr-2" />
                                     Edit Ticket
@@ -114,20 +115,20 @@ export default function TicketDetailClient({
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
                     {/* Main Information */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-2 space-y-4 sm:space-y-6">
                         {/* Description */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center">
-                                    <FileText className="h-5 w-5 mr-2" />
+                            <CardHeader className="pb-3">
+                                <CardTitle className="flex items-center text-base sm:text-lg">
+                                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                                     Description
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-gray-700 whitespace-pre-wrap">
+                                <p className="text-sm sm:text-base text-gray-700 whitespace-pre-wrap break-words">
                                     {ticket.description}
                                 </p>
                             </CardContent>
@@ -135,7 +136,7 @@ export default function TicketDetailClient({
 
                         {/* Comments Section - now with actual functionality */}
                         <Card>
-                            <CardContent className="p-6">
+                            <CardContent className="p-4 sm:p-6">
                                 <CommentList
                                     initialComments={initialComments}
                                     ticketId={ticket.id}
@@ -149,7 +150,7 @@ export default function TicketDetailClient({
 
                         {/* Attachments Section */}
                         <Card>
-                            <CardContent className="p-6">
+                            <CardContent className="p-4 sm:p-6">
                                 <AttachmentManager
                                     ticketId={ticket.id}
                                     workspaceId={workspaceId}
@@ -162,18 +163,18 @@ export default function TicketDetailClient({
                     </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6">
                         {/* Ticket Details */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Ticket Details</CardTitle>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-base sm:text-lg">Ticket Details</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-3 sm:space-y-4">
                                 <div className="flex items-start space-x-3">
-                                    <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">Reported</p>
-                                        <p className="text-sm text-gray-600">
+                                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                    <div className="min-w-0">
+                                        <p className="text-xs sm:text-sm font-medium text-gray-900">Reported</p>
+                                        <p className="text-xs sm:text-sm text-gray-600 break-words">
                                             {formatDate(ticket.reportedDate)}
                                         </p>
                                     </div>
@@ -181,10 +182,10 @@ export default function TicketDetailClient({
 
                                 {ticket.updatedDate && (
                                     <div className="flex items-start space-x-3">
-                                        <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-900">Last Updated</p>
-                                            <p className="text-sm text-gray-600">
+                                        <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                        <div className="min-w-0">
+                                            <p className="text-xs sm:text-sm font-medium text-gray-900">Last Updated</p>
+                                            <p className="text-xs sm:text-sm text-gray-600 break-words">
                                                 {formatDate(ticket.updatedDate)}
                                             </p>
                                         </div>
@@ -193,10 +194,10 @@ export default function TicketDetailClient({
 
                                 {ticket.maintenanceTime && (
                                     <div className="flex items-start space-x-3">
-                                        <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-900">Scheduled Maintenance</p>
-                                            <p className="text-sm text-gray-600">
+                                        <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                        <div className="min-w-0">
+                                            <p className="text-xs sm:text-sm font-medium text-gray-900">Scheduled Maintenance</p>
+                                            <p className="text-xs sm:text-sm text-gray-600 break-words">
                                                 {formatDate(ticket.maintenanceTime)}
                                             </p>
                                         </div>
@@ -204,10 +205,10 @@ export default function TicketDetailClient({
                                 )}
 
                                 <div className="flex items-start space-x-3">
-                                    <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">Assignee</p>
-                                        <p className="text-sm text-gray-600">
+                                    <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                    <div className="min-w-0">
+                                        <p className="text-xs sm:text-sm font-medium text-gray-900">Assignee</p>
+                                        <p className="text-xs sm:text-sm text-gray-600">
                                             {ticket.assigneeId ? 'Assigned' : 'Unassigned'}
                                         </p>
                                     </div>
@@ -217,21 +218,21 @@ export default function TicketDetailClient({
 
                         {/* Related Kiosk */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Related Kiosk</CardTitle>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-base sm:text-lg">Related Kiosk</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="flex items-start space-x-3">
-                                    <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">Kiosk Location</p>
-                                        <p className="text-sm text-gray-600">
+                                    <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs sm:text-sm font-medium text-gray-900">Kiosk Location</p>
+                                        <p className="text-xs sm:text-sm text-gray-600 break-all">
                                             Kiosk ID: {ticket.kioskId}
                                         </p>
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            className="mt-2"
+                                            className="mt-2 w-full sm:w-auto min-h-[44px]"
                                             onClick={() => router.push(`/workspace/${workspaceId}/kiosks/${ticket.kioskId}`)}
                                         >
                                             View Kiosk Details
@@ -243,14 +244,14 @@ export default function TicketDetailClient({
 
                         {/* Quick Actions */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Quick Actions</CardTitle>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-base sm:text-lg">Quick Actions</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-2">
                                 {canEdit && (
                                     <Button
                                         variant="outline"
-                                        className="w-full"
+                                        className="w-full min-h-[44px]"
                                         onClick={() => router.push(`/workspace/${workspaceId}/tickets/${ticket.id}/edit`)}
                                     >
                                         <Edit className="h-4 w-4 mr-2" />
@@ -259,7 +260,7 @@ export default function TicketDetailClient({
                                 )}
                                 <Button
                                     variant="outline"
-                                    className="w-full"
+                                    className="w-full min-h-[44px]"
                                     onClick={() => router.push(`/workspace/${workspaceId}/kiosks/${ticket.kioskId}`)}
                                 >
                                     <MapPin className="h-4 w-4 mr-2" />

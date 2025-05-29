@@ -33,19 +33,19 @@ export default function DashboardClient({ workspace, userRole }: DashboardClient
             {/* Header */}
             <div className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 sm:py-0 sm:h-16 gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => router.push('/workspaces')}
-                                className="mr-4"
+                                className="w-fit sm:w-auto"
                             >
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Back to Workspaces
                             </Button>
                             <div>
-                                <h1 className="text-xl font-semibold text-gray-900">
+                                <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
                                     {workspace.name}
                                 </h1>
                                 <p className="text-sm text-gray-600">
@@ -54,7 +54,7 @@ export default function DashboardClient({ workspace, userRole }: DashboardClient
                             </div>
                         </div>
                         <div className="flex items-center space-x-4">
-                            <Badge className={getRoleBadgeColor(userRole)}>
+                            <Badge className={`${getRoleBadgeColor(userRole)} text-xs`}>
                                 {userRole}
                             </Badge>
                         </div>
@@ -63,36 +63,36 @@ export default function DashboardClient({ workspace, userRole }: DashboardClient
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
                 {/* Welcome Section */}
-                <div className="mb-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                <div className="mb-6 sm:mb-8">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                         Welcome to {workspace.name}
                     </h2>
-                    <p className="text-gray-600">
+                    <p className="text-sm sm:text-base text-gray-600">
                         Manage your kiosk maintenance activities from this workspace dashboard.
                     </p>
                 </div>
 
                 {/* Quick Actions Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
                     {/* Kiosks Card */}
-                    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                        <CardHeader>
+                    <Card className="hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer">
+                        <CardHeader className="pb-3">
                             <div className="flex items-center">
-                                <Building2 className="h-8 w-8 text-blue-600 mr-3" />
-                                <div>
-                                    <CardTitle>Kiosks</CardTitle>
-                                    <CardDescription>Manage kiosk locations and status</CardDescription>
+                                <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mr-3 flex-shrink-0" />
+                                <div className="min-w-0">
+                                    <CardTitle className="text-base sm:text-lg">Kiosks</CardTitle>
+                                    <CardDescription className="text-sm">Manage kiosk locations and status</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-0">
                             <p className="text-sm text-gray-600 mb-4">
                                 View and manage all kiosks in this workspace.
                             </p>
                             <Button
-                                className="w-full"
+                                className="w-full min-h-[44px]"
                                 onClick={() => router.push(`/workspace/${workspace.id}/kiosks`)}
                             >
                                 View Kiosks
@@ -101,22 +101,22 @@ export default function DashboardClient({ workspace, userRole }: DashboardClient
                     </Card>
 
                     {/* Tickets Card */}
-                    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                        <CardHeader>
+                    <Card className="hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer">
+                        <CardHeader className="pb-3">
                             <div className="flex items-center">
-                                <Ticket className="h-8 w-8 text-green-600 mr-3" />
-                                <div>
-                                    <CardTitle>Tickets</CardTitle>
-                                    <CardDescription>Track maintenance requests</CardDescription>
+                                <Ticket className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 mr-3 flex-shrink-0" />
+                                <div className="min-w-0">
+                                    <CardTitle className="text-base sm:text-lg">Tickets</CardTitle>
+                                    <CardDescription className="text-sm">Track maintenance requests</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-0">
                             <p className="text-sm text-gray-600 mb-4">
                                 Create and manage maintenance tickets.
                             </p>
                             <Button
-                                className="w-full"
+                                className="w-full min-h-[44px]"
                                 onClick={() => router.push(`/workspace/${workspace.id}/tickets`)}
                             >
                                 View Tickets
@@ -125,22 +125,22 @@ export default function DashboardClient({ workspace, userRole }: DashboardClient
                     </Card>
 
                     {/* Team Card */}
-                    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                        <CardHeader>
+                    <Card className="hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer sm:col-span-2 lg:col-span-1">
+                        <CardHeader className="pb-3">
                             <div className="flex items-center">
-                                <Users className="h-8 w-8 text-purple-600 mr-3" />
-                                <div>
-                                    <CardTitle>Team</CardTitle>
-                                    <CardDescription>Manage workspace members</CardDescription>
+                                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 mr-3 flex-shrink-0" />
+                                <div className="min-w-0">
+                                    <CardTitle className="text-base sm:text-lg">Team</CardTitle>
+                                    <CardDescription className="text-sm">Manage workspace members</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-0">
                             <p className="text-sm text-gray-600 mb-4">
                                 Invite and manage team members.
                             </p>
                             <Button
-                                className="w-full"
+                                className="w-full min-h-[44px]"
                                 disabled
                                 variant="outline"
                             >
@@ -151,47 +151,47 @@ export default function DashboardClient({ workspace, userRole }: DashboardClient
                 </div>
 
                 {/* Stats Section */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
                     <Card>
-                        <CardHeader className="pb-2">
-                            <CardDescription>Total Kiosks</CardDescription>
-                            <CardTitle className="text-2xl">0</CardTitle>
+                        <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                            <CardDescription className="text-xs sm:text-sm">Total Kiosks</CardDescription>
+                            <CardTitle className="text-xl sm:text-2xl">0</CardTitle>
                         </CardHeader>
                     </Card>
 
                     <Card>
-                        <CardHeader className="pb-2">
-                            <CardDescription>Open Tickets</CardDescription>
-                            <CardTitle className="text-2xl">0</CardTitle>
+                        <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                            <CardDescription className="text-xs sm:text-sm">Open Tickets</CardDescription>
+                            <CardTitle className="text-xl sm:text-2xl">0</CardTitle>
                         </CardHeader>
                     </Card>
 
                     <Card>
-                        <CardHeader className="pb-2">
-                            <CardDescription>Team Members</CardDescription>
-                            <CardTitle className="text-2xl">1</CardTitle>
+                        <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                            <CardDescription className="text-xs sm:text-sm">Team Members</CardDescription>
+                            <CardTitle className="text-xl sm:text-2xl">1</CardTitle>
                         </CardHeader>
                     </Card>
 
                     <Card>
-                        <CardHeader className="pb-2">
-                            <CardDescription>Your Role</CardDescription>
-                            <CardTitle className="text-lg">{userRole}</CardTitle>
+                        <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                            <CardDescription className="text-xs sm:text-sm">Your Role</CardDescription>
+                            <CardTitle className="text-base sm:text-lg">{userRole}</CardTitle>
                         </CardHeader>
                     </Card>
                 </div>
 
                 {/* Recent Activity */}
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
-                        <CardDescription>Latest updates in this workspace</CardDescription>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base sm:text-lg">Recent Activity</CardTitle>
+                        <CardDescription className="text-sm">Latest updates in this workspace</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-center py-8 text-gray-500">
-                            <Wrench className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                            <p>No recent activity</p>
-                            <p className="text-sm">Activity will appear here once you start using the workspace.</p>
+                    <CardContent className="pt-0">
+                        <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
+                            <Wrench className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-400" />
+                            <p className="text-sm sm:text-base">No recent activity</p>
+                            <p className="text-xs sm:text-sm mt-1">Activity will appear here once you start using the workspace.</p>
                         </div>
                     </CardContent>
                 </Card>

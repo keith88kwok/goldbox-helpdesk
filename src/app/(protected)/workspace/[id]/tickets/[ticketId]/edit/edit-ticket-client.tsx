@@ -124,41 +124,41 @@ export default function EditTicketClient({
     };
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <div className="container mx-auto px-4 py-4 sm:py-8 max-w-2xl">
             {/* Header */}
-            <div className="mb-8">
-                <div className="flex items-center gap-4 mb-4">
+            <div className="mb-6 sm:mb-8">
+                <div className="flex items-center gap-2 sm:gap-4 mb-4">
                     <Link href={`/workspace/${workspaceId}/tickets/${ticket.id}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="w-fit">
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Back to Ticket
                         </Button>
                     </Link>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900">Edit Ticket</h1>
-                <p className="text-gray-600 mt-1">Update ticket details for {workspace.name}</p>
+                <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Edit Ticket</h1>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">Update ticket details for {workspace.name}</p>
             </div>
 
             {/* Form */}
             <Card>
-                <CardHeader>
-                    <CardTitle>Ticket Details</CardTitle>
+                <CardHeader className="pb-3 sm:pb-6">
+                    <CardTitle className="text-base sm:text-lg">Ticket Details</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                <CardContent className="p-4 sm:p-6">
+                    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                         {/* Success Message */}
                         {success && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
-                                <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                                <p className="text-green-700">Ticket updated successfully! Redirecting...</p>
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 flex items-center gap-3">
+                                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+                                <p className="text-sm sm:text-base text-green-700">Ticket updated successfully! Redirecting...</p>
                             </div>
                         )}
 
                         {/* Error Message */}
                         {error && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
-                                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-                                <p className="text-red-700">{error}</p>
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 flex items-center gap-3">
+                                <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 flex-shrink-0" />
+                                <p className="text-sm sm:text-base text-red-700">{error}</p>
                             </div>
                         )}
 
@@ -167,7 +167,7 @@ export default function EditTicketClient({
                             <select
                                 value={formData.kioskId}
                                 onChange={(e) => handleInputChange('kioskId', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                                 required
                             >
                                 <option value="">Select a kiosk</option>
@@ -184,7 +184,7 @@ export default function EditTicketClient({
                             <select
                                 value={formData.assigneeId}
                                 onChange={(e) => handleInputChange('assigneeId', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                             >
                                 <option value="">Unassigned</option>
                                 {workspaceUsers.map((user) => (
@@ -193,7 +193,7 @@ export default function EditTicketClient({
                                     </option>
                                 ))}
                             </select>
-                            <p className="text-sm text-gray-500 mt-1">Optional - leave blank for unassigned</p>
+                            <p className="text-xs sm:text-sm text-gray-500 mt-1">Optional - leave blank for unassigned</p>
                         </FormField>
 
                         {/* Title */}
@@ -203,6 +203,7 @@ export default function EditTicketClient({
                                 value={formData.title}
                                 onChange={(e) => handleInputChange('title', e.target.value)}
                                 required
+                                className="text-base" /* Prevent iOS zoom */
                             />
                         </FormField>
 
@@ -214,6 +215,7 @@ export default function EditTicketClient({
                                 onChange={(e) => handleInputChange('description', e.target.value)}
                                 rows={4}
                                 required
+                                className="text-base min-h-[120px]" /* Prevent iOS zoom */
                             />
                         </FormField>
 
@@ -222,7 +224,7 @@ export default function EditTicketClient({
                             <select
                                 value={formData.status}
                                 onChange={(e) => handleInputChange('status', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                             >
                                 <option value="OPEN">Open</option>
                                 <option value="IN_PROGRESS">In Progress</option>
@@ -237,17 +239,19 @@ export default function EditTicketClient({
                                 type="datetime-local"
                                 value={formData.maintenanceTime}
                                 onChange={(e) => handleInputChange('maintenanceTime', e.target.value)}
+                                className="text-base" /* Prevent iOS zoom */
                             />
-                            <p className="text-sm text-gray-500 mt-1">Optional</p>
+                            <p className="text-xs sm:text-sm text-gray-500 mt-1">Optional</p>
                         </FormField>
 
                         {/* Actions */}
-                        <div className="flex justify-end gap-4 pt-6">
+                        <div className="flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-4 pt-4 sm:pt-6">
                             <Button 
                                 type="button" 
                                 variant="outline" 
                                 onClick={handleCancel}
                                 disabled={isSubmitting}
+                                className="w-full sm:w-auto min-h-[44px]"
                             >
                                 Cancel
                             </Button>
@@ -255,6 +259,7 @@ export default function EditTicketClient({
                                 type="submit" 
                                 isLoading={isSubmitting}
                                 disabled={isSubmitting || success}
+                                className="w-full sm:w-auto min-h-[44px]"
                             >
                                 {isSubmitting ? 'Updating...' : success ? 'Updated!' : 'Update Ticket'}
                             </Button>
