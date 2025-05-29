@@ -23,6 +23,14 @@ export interface TeamManagementData {
     canManageTeam: boolean;
 }
 
+export interface AvailableUser {
+    id: string;
+    userId: string;
+    name: string;
+    email: string;
+    username: string;
+}
+
 /**
  * Get detailed team member information for a workspace
  */
@@ -268,4 +276,60 @@ export async function getCurrentUserId(): Promise<string> {
         throw new Error('Current user not found');
     }
     return currentUser[0].id;
+}
+
+/**
+ * Get users who are not members of the specified workspace
+ * Useful for showing available users to invite
+ */
+export async function getNonWorkspaceUsers(workspaceId: string): Promise<AvailableUser[]> {
+    try {
+        // Validate workspace access and ensure user is ADMIN
+        const { userRole } = await getWorkspaceAccess(workspaceId);
+        
+        if (userRole !== 'ADMIN') {
+            throw new Error('Only workspace administrators can view available users');
+        }
+
+        // Get all users in the system
+        const { data: allUsers, errors: userErrors } = await cookiesClient.models.User.list();
+        
+        if (userErrors || !allUsers) {
+            throw new Error('Failed to fetch users');
+        }
+
+        // Get current workspace members
+        const { data: workspaceUsers, errors: workspaceErrors } = await cookiesClient.models.WorkspaceUser.list({
+            filter: {
+                workspaceId: { eq: workspaceId }
+            }
+        });
+
+        if (workspaceErrors) {
+            throw new Error('Failed to fetch workspace members');
+        }
+
+        // Create a set of user IDs who are already members
+        const memberUserIds = new Set(
+            (workspaceUsers || []).map(wu => wu.userId)
+        );
+
+        // Filter out users who are already members
+        const availableUsers = allUsers
+            .filter(user => !memberUserIds.has(user.userId))
+            .map(user => ({
+                id: user.id,
+                userId: user.userId,
+                name: user.name,
+                email: user.email,
+                username: user.username
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        return availableUsers;
+
+    } catch (error) {
+        console.error('Error fetching non-workspace users:', error);
+        throw error;
+    }
 } 

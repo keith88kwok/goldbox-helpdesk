@@ -1,6 +1,6 @@
 'use server';
 
-import { updateUserRole, removeUserFromWorkspace, getCurrentUserId } from '@/lib/server/team-utils';
+import { updateUserRole, removeUserFromWorkspace, getCurrentUserId, getNonWorkspaceUsers } from '@/lib/server/team-utils';
 import { revalidatePath } from 'next/cache';
 
 export async function updateUserRoleAction(
@@ -42,6 +42,22 @@ export async function removeUserAction(
         return {
             success: false,
             message: 'Failed to remove user from workspace',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+export async function getAvailableUsersAction(workspaceId: string) {
+    try {
+        const availableUsers = await getNonWorkspaceUsers(workspaceId);
+        return {
+            success: true,
+            users: availableUsers
+        };
+    } catch (error) {
+        return {
+            success: false,
+            users: [],
             error: error instanceof Error ? error.message : 'Unknown error'
         };
     }
