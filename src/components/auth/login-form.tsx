@@ -74,30 +74,34 @@ export function LoginForm({ onSwitchToSignup, onSwitchToReset }: LoginFormProps)
 
         try {
             await login(formData.username, formData.password);
-            // If login is successful and no authStep is required, redirect
-            if (!authStep) {
-                router.push('/dashboard');
-            }
             // If authStep is set, the component will re-render to show the appropriate form
         } catch (error: any) {
             console.error('Login error:', error);
 
-            // Handle specific Cognito errors
+            // Handle specific Cognito errors with better user guidance
             switch (error.name) {
                 case 'UserNotConfirmedException':
                     setSubmitError('Please verify your email address. Check your email for the confirmation code.');
                     break;
                 case 'NotAuthorizedException':
-                    setSubmitError('Invalid username or password');
+                    setSubmitError('Invalid username or password. If you were recently invited to a workspace, please check your invitation email for the correct credentials.');
                     break;
                 case 'UserNotFoundException':
-                    setSubmitError('User not found');
+                    setSubmitError('User not found. If you were recently invited, your account may still be being set up. Please contact your administrator.');
                     break;
                 case 'TooManyRequestsException':
                     setSubmitError('Too many failed attempts. Please try again later.');
                     break;
+                case 'UnexpectedSignInInterruptionException':
+                    setSubmitError('There was an issue completing your sign-in. This may happen with new accounts. Please try refreshing the page and signing in again.');
+                    break;
                 default:
-                    setSubmitError(error.message || 'Login failed. Please try again.');
+                    // Provide more helpful error messages for common scenarios
+                    if (error.message?.includes('User profile not found') || error.message?.includes('sync failed')) {
+                        setSubmitError('Your user profile is being set up. Please try refreshing the page in a moment, or contact support if this persists.');
+                    } else {
+                        setSubmitError(error.message || 'Login failed. Please try again.');
+                    }
             }
         }
     };

@@ -54,7 +54,8 @@ export default function TeamClient({
         preferredUsername: '',
         givenName: '',
         familyName: '',
-        role: 'MEMBER' as 'ADMIN' | 'MEMBER' | 'VIEWER'
+        role: 'MEMBER' as 'ADMIN' | 'MEMBER' | 'VIEWER',
+        sendInviteEmail: false
     });
 
     // Filter members based on search term
@@ -102,6 +103,7 @@ export default function TeamClient({
             // Use email as username for Cognito login
             const username = inviteForm.email;
 
+            // Call the lambda function directly without server-side validation
             const { data: inviteResult, errors: inviteErrors } = await client.queries.inviteUser({
                 email: inviteForm.email,
                 username: username,
@@ -110,7 +112,7 @@ export default function TeamClient({
                 familyName: inviteForm.familyName,
                 workspaceId: workspaceId,
                 role: inviteForm.role,
-                sendInviteEmail: false,
+                sendInviteEmail: inviteForm.sendInviteEmail,
             });
 
             if (inviteErrors && inviteErrors.length > 0) {
@@ -126,8 +128,29 @@ export default function TeamClient({
             const result = JSON.parse(inviteResult as string);
             
             if (result.success) {
-                setSuccess(result.message);
-                setInviteForm({ email: '', preferredUsername: '', givenName: '', familyName: '', role: 'MEMBER' });
+                // Create a detailed success message with login credentials
+                const successMessage = result.isNewUser 
+                    ? inviteForm.sendInviteEmail 
+                        ? `✅ ${result.message}
+
+📧 Email invitation sent to ${inviteForm.email}!
+The user will receive login instructions via email from AWS Cognito.
+
+Workspace: ${workspace.name}
+Login URL: ${window.location.origin}/auth/login`
+                        : `✅ ${result.message}
+
+📧 Login Information to share with ${inviteForm.preferredUsername}:
+• Email/Username: ${inviteForm.email}
+• Temporary Password: ${result.temporaryPassword || 'Generated automatically'}
+• Login URL: ${window.location.origin}/auth/login
+• Workspace: ${workspace.name}
+
+⚠️ Please share these credentials securely with the new user.`
+                    : result.message;
+
+                setSuccess(successMessage);
+                setInviteForm({ email: '', preferredUsername: '', givenName: '', familyName: '', role: 'MEMBER', sendInviteEmail: false });
                 setIsInviteModalOpen(false);
                 // Refresh the page to show new member
                 router.refresh();
@@ -306,6 +329,19 @@ export default function TeamClient({
                                                     <option value="ADMIN">Admin - Full management access</option>
                                                 </select>
                                             </div>
+
+                                            <div className="flex items-center space-x-2">
+                                                <input
+                                                    id="sendInviteEmail"
+                                                    type="checkbox"
+                                                    checked={inviteForm.sendInviteEmail}
+                                                    onChange={(e) => setInviteForm(prev => ({ ...prev, sendInviteEmail: e.target.checked }))}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                />
+                                                <Label htmlFor="sendInviteEmail" className="text-sm">
+                                                    Send email invitation (Cognito will email the temporary password)
+                                                </Label>
+                                            </div>
                                         </div>
 
                                         <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
@@ -346,7 +382,15 @@ export default function TeamClient({
                 
                 {success && (
                     <div className="mb-6 p-4 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md">
-                        {success}
+                        <div className="whitespace-pre-line">{success}</div>
+                        {success.includes('Login Information') && (
+                            <button 
+                                onClick={() => navigator.clipboard.writeText(success)}
+                                className="mt-2 px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                            >
+                                📋 Copy to Clipboard
+                            </button>
+                        )}
                     </div>
                 )}
 

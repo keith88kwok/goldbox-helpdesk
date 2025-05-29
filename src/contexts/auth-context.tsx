@@ -30,6 +30,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     authStep: string | null;
     tempUsername: string | null;
+    authError: string | null;
     login: (username: string, password: string) => Promise<void>;
     signup: (username: string, email: string, password: string, givenName: string, familyName: string) => Promise<void>;
     confirmSignup: (username: string, code: string) => Promise<void>;
@@ -40,6 +41,7 @@ interface AuthContextType {
     resetPasswordConfirm: (username: string, code: string, newPassword: string) => Promise<void>;
     setCurrentWorkspace: (workspace: Schema['Workspace']['type']) => void;
     refreshUser: () => Promise<void>;
+    clearAuthError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,29 +53,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isInitializing, setIsInitializing] = useState(true);
     const [authStep, setAuthStep] = useState<string | null>(null);
     const [tempUsername, setTempUsername] = useState<string | null>(null);
+    const [authError, setAuthError] = useState<string | null>(null);
 
     const isAuthenticated = !!user;
 
-    // Load user data from database
-    const loadUserData = async (cognitoUser: any): Promise<User | null> => {
+    // Load user data from database with better error handling
+    const loadUserData = async (cognitoUser: { username: string; signInDetails?: { loginId?: string } }): Promise<User | null> => {
         try {
             const { data: dbUser } = await client.models.User.get({
                 id: cognitoUser.username
             });
 
             if (!dbUser) {
-                console.warn('User not found in database');
-                return null;
+                console.warn('AuthContext: User found in Cognito but not in database - this may be a new invited user');
+                // For new invited users, try to find by cognitoId instead
+                const { data: dbUsersByCognito } = await client.models.User.list({
+                    filter: { cognitoId: { eq: cognitoUser.username } }
+                });
+
+                if (!dbUsersByCognito || dbUsersByCognito.length === 0) {
+                    console.warn('AuthContext: User not found by either ID or cognitoId - user may need database sync');
+                    setAuthError('User profile not synced. Please contact support if this persists.');
+                    return null;
+                }
+
+                // Use the user found by cognitoId
+                const syncedUser = dbUsersByCognito[0];
+                console.log('AuthContext: Found user by cognitoId:', syncedUser.id);
+                
+                // Continue with workspace loading using the synced user
+                const { data: workspaceUsers } = await client.models.WorkspaceUser.list({
+                    filter: { userId: { eq: syncedUser.userId } }
+                });
+
+                const workspacesWithDetails = await Promise.all(
+                    (workspaceUsers || [])
+                        .filter(wu => wu.role && wu.joinedAt)
+                        .map(async (wu) => {
+                            const { data: workspace } = await client.models.Workspace.get({
+                                id: wu.workspaceId
+                            });
+                            if (!workspace) return null;
+                            return {
+                                workspace,
+                                role: wu.role as 'ADMIN' | 'MEMBER' | 'VIEWER',
+                                joinedAt: wu.joinedAt!
+                            };
+                        })
+                );
+
+                return {
+                    id: syncedUser.userId,
+                    email: syncedUser.email,
+                    username: syncedUser.username,
+                    name: syncedUser.name,
+                    workspaces: workspacesWithDetails.filter(Boolean) as Array<{
+                        workspace: Schema['Workspace']['type'];
+                        role: 'ADMIN' | 'MEMBER' | 'VIEWER';
+                        joinedAt: string;
+                    }>
+                };
             }
 
-            // Load user workspaces
+            // Load user workspaces for regular users
             const { data: workspaceUsers } = await client.models.WorkspaceUser.list({
                 filter: { userId: { eq: dbUser.userId } }
             });
 
             const workspacesWithDetails = await Promise.all(
                 (workspaceUsers || [])
-                    .filter(wu => wu.role && wu.joinedAt) // Filter out null values
+                    .filter(wu => wu.role && wu.joinedAt)
                     .map(async (wu) => {
                         const { data: workspace } = await client.models.Workspace.get({
                             id: wu.workspaceId
@@ -99,14 +148,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }>
             };
         } catch (error) {
-            console.error('Error loading user data:', error);
+            console.error('AuthContext: Error loading user data:', error);
+            setAuthError('Failed to load user profile. Please try refreshing the page.');
             return null;
         }
     };
 
-    // Check authentication status on mount
+    // Check authentication status on mount with better error handling
     const checkAuthStatus = async () => {
         console.log('🔍 AuthContext - Checking initial auth status...');
+        
+        // Safari-specific debugging
+        if (typeof window !== 'undefined') {
+            const userAgent = navigator.userAgent;
+            const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent);
+            const isLocalhost = window.location.hostname === 'localhost';
+            
+            console.log('Browser info:', {
+                isSafari,
+                isLocalhost,
+                userAgent: userAgent.substring(0, 50) + '...',
+                cookiesEnabled: navigator.cookieEnabled,
+                protocol: window.location.protocol
+            });
+
+            if (isSafari) {
+                console.log('🦁 Safari detected - checking storage capabilities...');
+                try {
+                    localStorage.setItem('safari-test', 'test');
+                    localStorage.removeItem('safari-test');
+                    console.log('✅ localStorage available in Safari');
+                } catch (error) {
+                    console.warn('❌ localStorage blocked in Safari:', error);
+                }
+            }
+        }
+
         try {
             const cognitoUser = await getCurrentUser();
             console.log('✅ AuthContext - User found in Cognito:', cognitoUser.username);
@@ -116,20 +193,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (userData) {
                 console.log('✅ AuthContext - User data loaded successfully');
                 setUser(userData);
+                setAuthError(null); // Clear any previous errors
                 // Set default workspace to first one
                 if (userData.workspaces.length > 0) {
                     setCurrentWorkspace(userData.workspaces[0].workspace);
                 }
             } else {
-                console.log('⚠️ AuthContext - User found in Cognito but not in database');
-                setUser(null);
+                console.log('⚠️ AuthContext - User found in Cognito but database sync failed');
+                // Don't set user to null immediately - let user try to refresh
+                // setUser(null);
                 setCurrentWorkspace(null);
             }
         } catch (error) {
             // User not authenticated
-            console.log('❌ AuthContext - No authenticated user found');
+            console.log('❌ AuthContext - No authenticated user found:', error);
             setUser(null);
             setCurrentWorkspace(null);
+            setAuthError(null); // Clear auth errors for unauthenticated state
         } finally {
             console.log('🏁 AuthContext - Initial auth check complete');
             setIsLoading(false);
@@ -141,9 +221,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         checkAuthStatus();
     }, []);
 
-    // Auth methods
+    // Auth methods with better error handling
     const login = async (username: string, password: string) => {
         setIsLoading(true);
+        setAuthError(null);
+        
         try {
             const cognitoResponse = await signIn({ username, password });
             console.log('Cognito response:', cognitoResponse);
@@ -160,8 +242,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     }
                     setAuthStep(null);
                     setTempUsername(null);
+                    setAuthError(null);
                 } else {
-                    throw new Error('User profile not found');
+                    throw new Error('User profile not found or sync failed');
                 }
             } else {
                 // Handle different authentication steps
@@ -177,6 +260,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error('Login error:', error);
             setAuthStep(null);
             setTempUsername(null);
+            
+            // Set specific error messages for better user experience
+            if (error instanceof Error) {
+                setAuthError(error.message);
+            }
             throw error;
         } finally {
             setIsLoading(false);
@@ -189,6 +277,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         setIsLoading(true);
+        setAuthError(null);
+        
         try {
             const cognitoResponse = await confirmSignIn({
                 challengeResponse: newPassword
@@ -208,8 +298,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     }
                     setAuthStep(null);
                     setTempUsername(null);
+                    setAuthError(null);
                 } else {
-                    throw new Error('User profile not found');
+                    throw new Error('User profile not found after password confirmation');
                 }
             } else {
                 // Handle if there are more steps required
@@ -218,6 +309,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         } catch (error) {
             console.error('Password confirmation error:', error);
+            if (error instanceof Error) {
+                setAuthError(error.message);
+            }
             throw error;
         } finally {
             setIsLoading(false);
@@ -226,6 +320,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const signup = async (username: string, email: string, password: string, givenName: string, familyName: string) => {
         setIsLoading(true);
+        setAuthError(null);
+        
         try {
             await signUp({
                 username,
@@ -239,6 +335,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     },
                 },
             });
+        } catch (error) {
+            console.error('Signup error:', error);
+            if (error instanceof Error) {
+                setAuthError(error.message);
+            }
+            throw error;
         } finally {
             setIsLoading(false);
         }
@@ -246,6 +348,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const confirmSignup = async (username: string, code: string) => {
         setIsLoading(true);
+        setAuthError(null);
+        
         try {
             await confirmSignUp({ username, confirmationCode: code });
 
@@ -256,7 +360,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 cognitoId: cognitoUser.username,
                 email: cognitoUser.signInDetails?.loginId || '',
                 username: username,
-                name: `${cognitoUser.signInDetails?.loginId}`, // Will be updated when we have proper user attributes
+                name: `${cognitoUser.signInDetails?.loginId}`,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             });
@@ -265,7 +369,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const userData = await loadUserData(cognitoUser);
             if (userData) {
                 setUser(userData);
+                setAuthError(null);
             }
+        } catch (error) {
+            console.error('Confirm signup error:', error);
+            if (error instanceof Error) {
+                setAuthError(error.message);
+            }
+            throw error;
         } finally {
             setIsLoading(false);
         }
@@ -279,21 +390,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setCurrentWorkspace(null);
             setAuthStep(null);
             setTempUsername(null);
+            setAuthError(null);
+        } catch (error) {
+            console.error('Logout error:', error);
         } finally {
             setIsLoading(false);
         }
     };
 
     const resetPasswordRequest = async (username: string) => {
+        setAuthError(null);
         await resetPassword({ username });
     };
 
     const resetPasswordConfirm = async (username: string, code: string, newPassword: string) => {
+        setAuthError(null);
         await confirmResetPassword({ username, confirmationCode: code, newPassword });
     };
 
     const refreshUser = async () => {
         if (user) {
+            setAuthError(null);
             const cognitoUser = await getCurrentUser();
             const userData = await loadUserData(cognitoUser);
             if (userData) {
@@ -305,6 +422,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const resetAuthStep = () => {
         setAuthStep(null);
         setTempUsername(null);
+        setAuthError(null);
+    };
+
+    const clearAuthError = () => {
+        setAuthError(null);
     };
 
     const value: AuthContextType = {
@@ -315,6 +437,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated,
         authStep,
         tempUsername,
+        authError,
         login,
         signup,
         confirmSignup,
@@ -325,6 +448,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         resetPasswordConfirm,
         setCurrentWorkspace,
         refreshUser,
+        clearAuthError,
     };
 
     return (

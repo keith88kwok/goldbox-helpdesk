@@ -30,7 +30,16 @@ export async function getServerUser(): Promise<ServerUser> {
         });
 
         if (errors || !dbUsers || dbUsers.length === 0) {
-            throw new Error('User not found in database');
+            console.warn('Server auth: User found in Cognito but not in database:', cognitoUser.userId);
+            // Instead of throwing, return a temporary user object
+            // This helps with new invited users who might not be synced yet
+            return {
+                id: cognitoUser.userId,
+                email: cognitoUser.signInDetails?.loginId || '',
+                username: cognitoUser.signInDetails?.loginId || '',
+                name: 'User',
+                cognitoId: cognitoUser.userId
+            };
         }
 
         const dbUser = dbUsers[0];
@@ -49,12 +58,14 @@ export async function getServerUser(): Promise<ServerUser> {
 }
 
 /**
- * Check if user is authenticated (returns null if not)
+ * Get current authenticated user for server components (nullable version)
+ * Returns null instead of throwing error for better SSR compatibility
  */
 export async function getServerUserOrNull(): Promise<ServerUser | null> {
     try {
         return await getServerUser();
-    } catch {
+    } catch (error) {
+        console.log('Server auth: No authenticated user found:', error instanceof Error ? error.message : error);
         return null;
     }
 }
@@ -69,5 +80,27 @@ export async function isAuthenticated(): Promise<boolean> {
         return !!user;
     } catch {
         return false;
+    }
+}
+
+/**
+ * Get basic authentication session for server components
+ * Returns minimal session info to reduce database calls
+ */
+export async function getServerAuthSession() {
+    try {
+        const user = await AuthGetCurrentUserServer();
+        return {
+            isAuthenticated: !!user,
+            userId: user?.userId || null,
+            userEmail: user?.signInDetails?.loginId || null
+        };
+    } catch (error) {
+        console.log('Server session check failed:', error);
+        return {
+            isAuthenticated: false,
+            userId: null,
+            userEmail: null
+        };
     }
 } 

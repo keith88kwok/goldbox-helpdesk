@@ -5,6 +5,8 @@ import { runWithAmplifyServerContext } from "@/utils/amplify-utils";
 export async function middleware(request: NextRequest) {
     const response = NextResponse.next();
 
+    // Only check authentication for workspace routes to reduce conflicts
+    // Let client-side AuthContext handle other authentication logic
     const authenticated = await runWithAmplifyServerContext({
         nextServerContext: { request, response },
         operation: async (contextSpec) => {
@@ -22,19 +24,21 @@ export async function middleware(request: NextRequest) {
         return response;
     }
 
-    return NextResponse.redirect(new URL("/auth/login", request.url));
+    // Only redirect if accessing workspace routes
+    // Let client-side handle other auth redirects to prevent SSR conflicts
+    if (request.nextUrl.pathname.startsWith('/workspace')) {
+        return NextResponse.redirect(new URL("/auth/login", request.url));
+    }
+
+    return response;
 }
 
 export const config = {
     matcher: [
         /*
-         * Match all request paths except for the ones starting with:
-         * - api (API routes)
-         * - _next/static (static files)  
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * - auth (authentication pages)
+         * Only protect workspace routes to reduce SSR authentication conflicts
+         * Let client-side AuthContext handle other routes for better UX
          */
-        "/((?!api|_next/static|_next/image|favicon.ico|auth).*)",
+        "/workspace/:path*",
     ],
 }; 
