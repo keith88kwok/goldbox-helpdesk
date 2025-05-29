@@ -3,10 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { type SelectedTicket, type SelectedWorkspace } from '@/lib/server/ticket-utils';
 import { type TicketComment } from '@/lib/types/comment';
+import { type Attachment } from '@/lib/types/attachment';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import CommentList from '@/components/tickets/comment-list';
+import { AttachmentManager } from '@/components/tickets/attachment-manager';
 import { 
     Ticket, 
     ArrowLeft, 
@@ -24,6 +26,7 @@ interface TicketDetailClientProps {
     userRole: 'ADMIN' | 'MEMBER' | 'VIEWER';
     workspaceId: string;
     initialComments: TicketComment[];
+    initialAttachments: Attachment[];
     userId: string;
     userName: string;
     canComment: boolean;
@@ -43,9 +46,9 @@ export default function TicketDetailClient({
     userRole,
     workspaceId,
     initialComments,
+    initialAttachments,
     userId,
-    userName,
-    canComment
+    userName
 }: TicketDetailClientProps) {
     const router = useRouter();
 
@@ -140,6 +143,19 @@ export default function TicketDetailClient({
                                     userRole={userRole}
                                     userId={userId}
                                     userName={userName}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        {/* Attachments Section */}
+                        <Card>
+                            <CardContent className="p-6">
+                                <AttachmentManager
+                                    ticketId={ticket.id}
+                                    workspaceId={workspaceId}
+                                    initialAttachments={initialAttachments}
+                                    canUpload={canEdit}
+                                    canDelete={canEdit}
                                 />
                             </CardContent>
                         </Card>

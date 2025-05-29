@@ -7,18 +7,21 @@ import { defineStorage } from '@aws-amplify/backend';
  * - Kiosk location photos and documents
  * - Ticket maintenance attachments
  * 
- * Folder structure: attachments/workspace/{workspace-id}/{entity_id}/*
+ * Folder structure: public/tickets/workspace/{workspace-id}/{ticket-id}/*
  */
 export const storage = defineStorage({
     name: 'helpdeskStorage',
     access: (allow) => ({
-        'attachments/workspace/{entity_id}/*': [
+        'public/attachments/*': [
             allow.authenticated.to(['read', 'write', 'delete']),
         ],
-        'kiosks/workspace/{entity_id}/*': [
+        'public/kiosks/*': [
             allow.authenticated.to(['read', 'write', 'delete']),
         ],
-        'tickets/workspace/{entity_id}/*': [
+        'public/tickets/*': [
+            allow.authenticated.to(['read', 'write', 'delete']),
+        ],
+        'public/*': [
             allow.authenticated.to(['read', 'write', 'delete']),
         ],
     }),

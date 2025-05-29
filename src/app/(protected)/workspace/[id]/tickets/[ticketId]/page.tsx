@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getTicketWithAccess } from '@/lib/server/ticket-utils';
 import { getTicketComments, validateCommentAccess } from '@/lib/server/comment-utils';
+import { getTicketAttachments } from '@/lib/server/attachment-utils';
 import TicketDetailClient from './ticket-detail-client';
 
 interface PageProps {
@@ -19,10 +20,11 @@ export default async function TicketDetailPage({ params }: PageProps) {
         // Fetch ticket data server-side with access validation
         const { ticket, workspace, userRole } = await getTicketWithAccess(id, ticketId);
 
-        // Fetch comment data and user access info
-        const [comments, commentAccess] = await Promise.all([
+        // Fetch comment data, attachments, and user access info
+        const [comments, commentAccess, attachments] = await Promise.all([
             getTicketComments(id, ticketId),
-            validateCommentAccess(id)
+            validateCommentAccess(id),
+            getTicketAttachments(ticket.id)
         ]);
 
         return (
@@ -32,6 +34,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
                 userRole={userRole}
                 workspaceId={id}
                 initialComments={comments}
+                initialAttachments={attachments}
                 userId={commentAccess.userId}
                 userName={commentAccess.userName}
                 canComment={commentAccess.canComment}

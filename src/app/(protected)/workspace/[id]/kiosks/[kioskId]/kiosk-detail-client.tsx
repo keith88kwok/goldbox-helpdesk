@@ -3,9 +3,11 @@
 import { useRouter } from 'next/navigation';
 import { type SelectedKiosk } from '@/lib/server/kiosk-utils';
 import { type SelectedWorkspace } from '@/lib/server/workspace-utils';
+import { type Attachment } from '@/lib/types/attachment';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { KioskAttachmentManager } from '@/components/kiosks/kiosk-attachment-manager';
 import { 
     Building2, 
     ArrowLeft, 
@@ -23,9 +25,10 @@ interface KioskDetailClientProps {
     workspace: SelectedWorkspace;
     userRole: 'ADMIN' | 'MEMBER' | 'VIEWER';
     workspaceId: string;
+    initialAttachments?: Attachment[];
 }
 
-export default function KioskDetailClient({ kiosk, workspace, userRole, workspaceId }: KioskDetailClientProps) {
+export default function KioskDetailClient({ kiosk, workspace, userRole, workspaceId, initialAttachments }: KioskDetailClientProps) {
     const router = useRouter();
 
     // Status badge colors
@@ -226,6 +229,25 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
                             </CardContent>
                         </Card>
                     </div>
+
+                    {/* Location Photos & Documents */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Location Photos & Documents</CardTitle>
+                            <CardDescription>
+                                Upload and manage photos and documents for this kiosk location
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <KioskAttachmentManager
+                                kioskId={kiosk.id}
+                                workspaceId={workspaceId}
+                                initialAttachments={initialAttachments}
+                                canUpload={canEditKiosk}
+                                canDelete={canEditKiosk}
+                            />
+                        </CardContent>
+                    </Card>
 
                     {/* Action Buttons */}
                     <div className="flex items-center justify-between pt-6 border-t">
