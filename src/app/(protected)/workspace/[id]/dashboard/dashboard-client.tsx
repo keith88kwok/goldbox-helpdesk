@@ -6,7 +6,7 @@ import { type WorkspaceStats } from '@/lib/server/dashboard-utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserMenu } from '@/components/ui/user-menu';
-import { Building2, Users, Wrench, Ticket, ArrowLeft } from 'lucide-react';
+import { Building2, Users, Clock, Ticket, ArrowLeft } from 'lucide-react';
 
 interface DashboardClientProps {
     workspace: SelectedWorkspace;
@@ -164,9 +164,9 @@ export default function DashboardClient({ workspace, userRole, stats }: Dashboar
                     </CardHeader>
                     <CardContent className="pt-0">
                         <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
-                            <Wrench className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-400" />
-                            <p className="text-sm sm:text-base">No recent activity</p>
-                            <p className="text-xs sm:text-sm mt-1">Activity will appear here once you start using the workspace.</p>
+                            <Clock className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-blue-400" />
+                            <p className="text-sm sm:text-base font-medium text-gray-900">Recent Activity - Coming Soon</p>
+                            <p className="text-xs sm:text-sm mt-1 text-gray-600">We're working on bringing you real-time activity updates for your workspace.</p>
                         </div>
                     </CardContent>
                 </Card>
