@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Plus, Building2, Users, Loader2 } from 'lucide-react';
 import { client } from '@/lib/amplify-client';
+import { UserMenu } from '@/components/ui/user-menu';
 
 interface WorkspacesClientProps {
     userWorkspaces: Array<{
@@ -129,70 +130,24 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
                                 Select a workspace to access kiosks and tickets
                             </p>
                         </div>
+                        <UserMenu />
+                    </div>
+                </div>
 
-                        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-                            <DialogTrigger asChild>
-                                <Button className="w-full sm:w-auto">
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Create Workspace
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="w-[95vw] max-w-md mx-auto">
-                                <form onSubmit={handleCreateWorkspace}>
-                                    <DialogHeader>
-                                        <DialogTitle>Create New Workspace</DialogTitle>
-                                        <DialogDescription>
-                                            Create a new workspace to organize your kiosk maintenance activities.
-                                        </DialogDescription>
-                                    </DialogHeader>
-
-                                    <div className="grid gap-4 py-4">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="name">Workspace Name</Label>
-                                            <Input
-                                                id="name"
-                                                value={createForm.name}
-                                                onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
-                                                placeholder="Enter workspace name"
-                                                required
-                                                className="text-base" /* Prevent iOS zoom */
-                                            />
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="description">Description (optional)</Label>
-                                            <Textarea
-                                                id="description"
-                                                value={createForm.description}
-                                                onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
-                                                placeholder="Describe this workspace"
-                                                rows={3}
-                                                className="text-base" /* Prevent iOS zoom */
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => setIsCreateModalOpen(false)}
-                                            disabled={isCreating}
-                                            className="w-full sm:w-auto"
-                                        >
-                                            Cancel
-                                        </Button>
-                                        <Button 
-                                            type="submit" 
-                                            disabled={isCreating || !createForm.name.trim()}
-                                            className="w-full sm:w-auto"
-                                        >
-                                            {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                                            Create Workspace
-                                        </Button>
-                                    </DialogFooter>
-                                </form>
-                            </DialogContent>
-                        </Dialog>
+                {/* User Info Display */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-6 sm:mb-8">
+                    <div className="flex items-center">
+                        <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold mr-3 flex-shrink-0">
+                            {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm sm:text-base font-medium text-blue-900 truncate">
+                                Welcome back, {user.name}
+                            </p>
+                            <p className="text-xs sm:text-sm text-blue-700 truncate">
+                                {user.email}
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -249,13 +204,6 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
                         ))}
                     </div>
                 )}
-
-                {/* User Info */}
-                <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
-                    <div className="text-center text-xs sm:text-sm text-gray-600 px-4">
-                        Logged in as {user.name} ({user.email})
-                    </div>
-                </div>
             </div>
         </div>
     );

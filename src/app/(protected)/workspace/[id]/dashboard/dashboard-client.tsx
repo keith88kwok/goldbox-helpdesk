@@ -5,7 +5,7 @@ import { type SelectedWorkspace } from '@/lib/server/workspace-utils';
 import { type WorkspaceStats } from '@/lib/server/dashboard-utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { UserMenu } from '@/components/ui/user-menu';
 import { Building2, Users, Wrench, Ticket, ArrowLeft } from 'lucide-react';
 
 interface DashboardClientProps {
@@ -16,19 +16,6 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ workspace, userRole, stats }: DashboardClientProps) {
     const router = useRouter();
-
-    const getRoleBadgeColor = (role: string) => {
-        switch (role) {
-            case 'ADMIN':
-                return 'bg-red-100 text-red-800';
-            case 'MEMBER':
-                return 'bg-blue-100 text-blue-800';
-            case 'VIEWER':
-                return 'bg-gray-100 text-gray-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -55,11 +42,7 @@ export default function DashboardClient({ workspace, userRole, stats }: Dashboar
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                            <Badge className={`${getRoleBadgeColor(userRole)} text-xs`}>
-                                {userRole}
-                            </Badge>
-                        </div>
+                        <UserMenu userRole={userRole} />
                     </div>
                 </div>
             </div>

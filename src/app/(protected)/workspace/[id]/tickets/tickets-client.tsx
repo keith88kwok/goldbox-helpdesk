@@ -201,7 +201,7 @@ export default function TicketsClient({
                                 <div className="mt-4 pt-4 border-t">
                                     <Link
                                         href={`/workspace/${workspace.id}/tickets/${ticket.id}`}
-                                        className="text-blue-600 hover:text-blue-800 text-sm font-medium block min-h-[44px] flex items-center"
+                                        className="text-blue-600 hover:text-blue-800 text-sm font-medium min-h-[44px] flex items-center"
                                     >
                                         View Details →
                                     </Link>

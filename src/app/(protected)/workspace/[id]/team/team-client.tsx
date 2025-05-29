@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserSelect } from '@/components/ui/user-select';
+import { UserMenu } from '@/components/ui/user-menu';
 import { 
     Users, 
     ArrowLeft, 
@@ -316,202 +317,205 @@ Login URL: ${window.location.origin}/auth/login`
                             </div>
                         </div>
                         
-                        {canManageTeam && (
-                            <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
-                                <DialogTrigger asChild>
-                                    <Button className="w-full sm:w-auto">
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Invite Member
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="w-[95vw] max-w-md mx-auto">
-                                    <form onSubmit={handleInviteUser}>
-                                        <DialogHeader>
-                                            <DialogTitle>Invite New Member</DialogTitle>
-                                            <DialogDescription>
-                                                Invite a user to join this workspace. Select an existing user or enter details for a new user.
-                                            </DialogDescription>
-                                        </DialogHeader>
+                        <div className="flex items-center gap-3">
+                            <UserMenu userRole={userRole} />
+                            {canManageTeam && (
+                                <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button className="w-full sm:w-auto">
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Invite Member
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="w-[95vw] max-w-md mx-auto">
+                                        <form onSubmit={handleInviteUser}>
+                                            <DialogHeader>
+                                                <DialogTitle>Invite New Member</DialogTitle>
+                                                <DialogDescription>
+                                                    Invite a user to join this workspace. Select an existing user or enter details for a new user.
+                                                </DialogDescription>
+                                            </DialogHeader>
 
-                                        <div className="grid gap-4 py-4">
-                                            {/* Mode Toggle */}
-                                            <div className="grid gap-2">
-                                                <Label>Invitation Method</Label>
-                                                <div className="flex items-center gap-4">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleModeToggle('select')}
-                                                        className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                                            inviteMode === 'select'
-                                                                ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-                                                                : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200'
-                                                        }`}
-                                                    >
-                                                        <Users className="h-4 w-4" />
-                                                        Select Existing User
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleModeToggle('email')}
-                                                        className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                                            inviteMode === 'email'
-                                                                ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-                                                                : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200'
-                                                        }`}
-                                                    >
-                                                        <Mail className="h-4 w-4" />
-                                                        Invite by Email
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {/* User Selection Mode */}
-                                            {inviteMode === 'select' && (
+                                            <div className="grid gap-4 py-4">
+                                                {/* Mode Toggle */}
                                                 <div className="grid gap-2">
-                                                    <Label>Select User</Label>
-                                                    <UserSelect
-                                                        users={availableUsers}
-                                                        selectedUser={selectedUser}
-                                                        onSelectUser={handleUserSelect}
-                                                        placeholder="Choose a user to invite..."
-                                                        isLoading={isLoadingUsers}
-                                                    />
-                                                    {availableUsers.length === 0 && !isLoadingUsers && (
-                                                        <p className="text-sm text-gray-500">
-                                                            No users available to invite. All existing users are already members of this workspace.
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {/* Email Mode */}
-                                            {inviteMode === 'email' && (
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="email">Email Address</Label>
-                                                    <Input
-                                                        id="email"
-                                                        type="email"
-                                                        value={inviteForm.email}
-                                                        onChange={(e) => {
-                                                            handleEmailChange(e.target.value);
-                                                        }}
-                                                        placeholder="user@company.com"
-                                                        required
-                                                        className="text-base"
-                                                    />
-                                                </div>
-                                            )}
-                                            
-                                            {/* Form fields - shown when user selected or in email mode */}
-                                            {(selectedUser || inviteMode === 'email') && (
-                                                <>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div className="grid gap-2">
-                                                            <Label htmlFor="preferredUsername">Preferred Username</Label>
-                                                            <Input
-                                                                id="preferredUsername"
-                                                                value={inviteForm.preferredUsername}
-                                                                onChange={(e) => setInviteForm(prev => ({ ...prev, preferredUsername: e.target.value }))}
-                                                                placeholder="john_doe"
-                                                                required
-                                                                className="text-base"
-                                                                disabled={!!selectedUser}
-                                                            />
-                                                        </div>
-                                                        <div className="grid gap-2">
-                                                            <Label htmlFor="givenName">First Name</Label>
-                                                            <Input
-                                                                id="givenName"
-                                                                value={inviteForm.givenName}
-                                                                onChange={(e) => setInviteForm(prev => ({ ...prev, givenName: e.target.value }))}
-                                                                placeholder="John"
-                                                                required
-                                                                className="text-base"
-                                                                disabled={!!selectedUser}
-                                                            />
-                                                        </div>
+                                                    <Label>Invitation Method</Label>
+                                                    <div className="flex items-center gap-4">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleModeToggle('select')}
+                                                            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                                                inviteMode === 'select'
+                                                                    ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
+                                                                    : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            <Users className="h-4 w-4" />
+                                                            Select Existing User
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleModeToggle('email')}
+                                                            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                                                inviteMode === 'email'
+                                                                    ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
+                                                                    : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            <Mail className="h-4 w-4" />
+                                                            Invite by Email
+                                                        </button>
                                                     </div>
-                                                    
+                                                </div>
+
+                                                {/* User Selection Mode */}
+                                                {inviteMode === 'select' && (
                                                     <div className="grid gap-2">
-                                                        <Label htmlFor="familyName">Last Name</Label>
+                                                        <Label>Select User</Label>
+                                                        <UserSelect
+                                                            users={availableUsers}
+                                                            selectedUser={selectedUser}
+                                                            onSelectUser={handleUserSelect}
+                                                            placeholder="Choose a user to invite..."
+                                                            isLoading={isLoadingUsers}
+                                                        />
+                                                        {availableUsers.length === 0 && !isLoadingUsers && (
+                                                            <p className="text-sm text-gray-500">
+                                                                No users available to invite. All existing users are already members of this workspace.
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Email Mode */}
+                                                {inviteMode === 'email' && (
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="email">Email Address</Label>
                                                         <Input
-                                                            id="familyName"
-                                                            value={inviteForm.familyName}
-                                                            onChange={(e) => setInviteForm(prev => ({ ...prev, familyName: e.target.value }))}
-                                                            placeholder="Doe"
+                                                            id="email"
+                                                            type="email"
+                                                            value={inviteForm.email}
+                                                            onChange={(e) => {
+                                                                handleEmailChange(e.target.value);
+                                                            }}
+                                                            placeholder="user@company.com"
                                                             required
                                                             className="text-base"
-                                                            disabled={!!selectedUser}
                                                         />
                                                     </div>
-                                                </>
-                                            )}
-                                            
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="role">Role</Label>
-                                                <select
-                                                    id="role"
-                                                    value={inviteForm.role}
-                                                    onChange={(e) => setInviteForm(prev => ({ ...prev, role: e.target.value as any }))}
-                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                >
-                                                    <option value="VIEWER">Viewer - View only access</option>
-                                                    <option value="MEMBER">Member - Create and edit content</option>
-                                                    <option value="ADMIN">Admin - Full management access</option>
-                                                </select>
+                                                )}
+                                                
+                                                {/* Form fields - shown when user selected or in email mode */}
+                                                {(selectedUser || inviteMode === 'email') && (
+                                                    <>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div className="grid gap-2">
+                                                                <Label htmlFor="preferredUsername">Preferred Username</Label>
+                                                                <Input
+                                                                    id="preferredUsername"
+                                                                    value={inviteForm.preferredUsername}
+                                                                    onChange={(e) => setInviteForm(prev => ({ ...prev, preferredUsername: e.target.value }))}
+                                                                    placeholder="john_doe"
+                                                                    required
+                                                                    className="text-base"
+                                                                    disabled={!!selectedUser}
+                                                                />
+                                                            </div>
+                                                            <div className="grid gap-2">
+                                                                <Label htmlFor="givenName">First Name</Label>
+                                                                <Input
+                                                                    id="givenName"
+                                                                    value={inviteForm.givenName}
+                                                                    onChange={(e) => setInviteForm(prev => ({ ...prev, givenName: e.target.value }))}
+                                                                    placeholder="John"
+                                                                    required
+                                                                    className="text-base"
+                                                                    disabled={!!selectedUser}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="familyName">Last Name</Label>
+                                                            <Input
+                                                                id="familyName"
+                                                                value={inviteForm.familyName}
+                                                                onChange={(e) => setInviteForm(prev => ({ ...prev, familyName: e.target.value }))}
+                                                                placeholder="Doe"
+                                                                required
+                                                                className="text-base"
+                                                                disabled={!!selectedUser}
+                                                            />
+                                                        </div>
+                                                    </>
+                                                )}
+                                                
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="role">Role</Label>
+                                                    <select
+                                                        id="role"
+                                                        value={inviteForm.role}
+                                                        onChange={(e) => setInviteForm(prev => ({ ...prev, role: e.target.value as any }))}
+                                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        <option value="VIEWER">Viewer - View only access</option>
+                                                        <option value="MEMBER">Member - Create and edit content</option>
+                                                        <option value="ADMIN">Admin - Full management access</option>
+                                                    </select>
+                                                </div>
+
+                                                {inviteMode === 'email' && (
+                                                    <div className="flex items-center space-x-2">
+                                                        <input
+                                                            id="sendInviteEmail"
+                                                            type="checkbox"
+                                                            checked={inviteForm.sendInviteEmail}
+                                                            onChange={(e) => setInviteForm(prev => ({ ...prev, sendInviteEmail: e.target.checked }))}
+                                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                        />
+                                                        <Label htmlFor="sendInviteEmail" className="text-sm">
+                                                            Send email invitation (Cognito will email the temporary password)
+                                                        </Label>
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            {inviteMode === 'email' && (
-                                                <div className="flex items-center space-x-2">
-                                                    <input
-                                                        id="sendInviteEmail"
-                                                        type="checkbox"
-                                                        checked={inviteForm.sendInviteEmail}
-                                                        onChange={(e) => setInviteForm(prev => ({ ...prev, sendInviteEmail: e.target.checked }))}
-                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                                    />
-                                                    <Label htmlFor="sendInviteEmail" className="text-sm">
-                                                        Send email invitation (Cognito will email the temporary password)
-                                                    </Label>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() => {
-                                                    setIsInviteModalOpen(false);
-                                                    setSelectedUser(null);
-                                                    setInviteMode('email');
-                                                    setInviteForm({
-                                                        email: '',
-                                                        preferredUsername: '',
-                                                        givenName: '',
-                                                        familyName: '',
-                                                        role: 'MEMBER',
-                                                        sendInviteEmail: false
-                                                    });
-                                                }}
-                                                disabled={isLoading}
-                                                className="w-full sm:w-auto"
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button 
-                                                type="submit" 
-                                                disabled={isLoading || (inviteMode === 'select' && !selectedUser)}
-                                                className="w-full sm:w-auto"
-                                            >
-                                                {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                                                {selectedUser ? 'Add to Workspace' : 'Send Invite'}
-                                            </Button>
-                                        </DialogFooter>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                        )}
+                                            <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setIsInviteModalOpen(false);
+                                                        setSelectedUser(null);
+                                                        setInviteMode('email');
+                                                        setInviteForm({
+                                                            email: '',
+                                                            preferredUsername: '',
+                                                            givenName: '',
+                                                            familyName: '',
+                                                            role: 'MEMBER',
+                                                            sendInviteEmail: false
+                                                        });
+                                                    }}
+                                                    disabled={isLoading}
+                                                    className="w-full sm:w-auto"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                <Button 
+                                                    type="submit" 
+                                                    disabled={isLoading || (inviteMode === 'select' && !selectedUser)}
+                                                    className="w-full sm:w-auto"
+                                                >
+                                                    {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                                    {selectedUser ? 'Add to Workspace' : 'Send Invite'}
+                                                </Button>
+                                            </DialogFooter>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

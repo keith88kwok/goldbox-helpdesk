@@ -81,7 +81,7 @@ export function DropdownMenuContent({
     children,
     ...props
 }: DropdownMenuContentProps & { isOpen?: boolean; setIsOpen?: (open: boolean) => void }) {
-    const { isOpen, setIsOpen } = props;
+    const { isOpen, setIsOpen, ...domProps } = props;
 
     if (!isOpen) return null;
 
@@ -90,6 +90,7 @@ export function DropdownMenuContent({
             className={`absolute z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white p-1 shadow-lg ${
                 align === 'end' ? 'right-0' : 'left-0'
             } top-full mt-1`}
+            {...domProps}
         >
             {React.Children.map(children, (child) => {
                 if (React.isValidElement(child)) {
