@@ -157,6 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check authentication status on mount with better error handling
     const checkAuthStatus = useCallback(async () => {
         setIsInitializing(true);
+        setIsLoading(true);
         setAuthError(null);
         
         try {
@@ -188,6 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setTempUsername(null);
         } finally {
             setIsInitializing(false);
+            setIsLoading(false);
         }
     }, [loadUserData]);
 
