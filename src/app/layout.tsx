@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AmplifyConfig } from "@/components/amplify-config";
 import { AuthProvider } from "@/contexts/auth-context";
+import { NavigationLoading } from "@/components/navigation-loading";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,6 +22,7 @@ export default function RootLayout({
             <body className={inter.className}>
                 <AmplifyConfig>
                     <AuthProvider>
+                        <NavigationLoading />
                         {children}
                     </AuthProvider>
                 </AmplifyConfig>

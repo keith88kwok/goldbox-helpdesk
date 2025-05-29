@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { type SelectedWorkspace } from '@/lib/server/workspace-utils';
+import { type WorkspaceStats } from '@/lib/server/dashboard-utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,9 +11,10 @@ import { Building2, Users, Wrench, Ticket, ArrowLeft } from 'lucide-react';
 interface DashboardClientProps {
     workspace: SelectedWorkspace;
     userRole: 'ADMIN' | 'MEMBER' | 'VIEWER';
+    stats: WorkspaceStats;
 }
 
-export default function DashboardClient({ workspace, userRole }: DashboardClientProps) {
+export default function DashboardClient({ workspace, userRole, stats }: DashboardClientProps) {
     const router = useRouter();
 
     const getRoleBadgeColor = (role: string) => {
@@ -155,21 +157,21 @@ export default function DashboardClient({ workspace, userRole }: DashboardClient
                     <Card>
                         <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
                             <CardDescription className="text-xs sm:text-sm">Total Kiosks</CardDescription>
-                            <CardTitle className="text-xl sm:text-2xl">0</CardTitle>
+                            <CardTitle className="text-xl sm:text-2xl">{stats.totalKiosks}</CardTitle>
                         </CardHeader>
                     </Card>
 
                     <Card>
                         <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
                             <CardDescription className="text-xs sm:text-sm">Open Tickets</CardDescription>
-                            <CardTitle className="text-xl sm:text-2xl">0</CardTitle>
+                            <CardTitle className="text-xl sm:text-2xl">{stats.openTickets}</CardTitle>
                         </CardHeader>
                     </Card>
 
                     <Card>
                         <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
                             <CardDescription className="text-xs sm:text-sm">Team Members</CardDescription>
-                            <CardTitle className="text-xl sm:text-2xl">1</CardTitle>
+                            <CardTitle className="text-xl sm:text-2xl">{stats.teamMembers}</CardTitle>
                         </CardHeader>
                     </Card>
 

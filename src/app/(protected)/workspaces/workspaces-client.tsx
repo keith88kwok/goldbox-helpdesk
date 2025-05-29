@@ -76,7 +76,7 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
 
             // Add creator as admin to the workspace
             const { data: workspaceUser, errors: userErrors } = await client.models.WorkspaceUser.create({
-                workspaceId: newWorkspace.workspaceId,
+                workspaceId: newWorkspace.id,
                 userId: user.id,
                 role: 'ADMIN',
                 joinedAt: new Date().toISOString()
