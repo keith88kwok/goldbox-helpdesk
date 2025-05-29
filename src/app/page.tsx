@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import Image from "next/image";
 
 export default function HomePage() {
     const { isAuthenticated, isLoading } = useAuth();
@@ -12,14 +11,16 @@ export default function HomePage() {
     useEffect(() => {
         if (!isLoading) {
             if (isAuthenticated) {
-                router.push('/dashboard');
+                // Redirect authenticated users to their workspaces (internal landing page)
+                router.push('/workspaces');
             } else {
+                // Redirect unauthenticated users to login
                 router.push('/auth/login');
             }
         }
     }, [isAuthenticated, isLoading, router]);
 
-    // Show loading while checking auth status
+    // Show loading while determining where to redirect
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
             <div className="text-center">
@@ -28,4 +29,4 @@ export default function HomePage() {
             </div>
         </div>
     );
-}
+} 

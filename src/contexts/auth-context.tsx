@@ -4,6 +4,10 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { signIn, signUp, signOut, getCurrentUser, confirmSignUp, resetPassword, confirmResetPassword, confirmSignIn } from 'aws-amplify/auth';
 import { client } from '@/lib/amplify-client';
 import type { Schema } from '@/lib/amplify-client';
+import { configureAmplify } from '@/lib/amplify-config';
+
+// Ensure Amplify is configured before this context loads
+configureAmplify();
 
 // Types
 interface User {

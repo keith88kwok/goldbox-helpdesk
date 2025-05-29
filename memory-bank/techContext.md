@@ -238,3 +238,79 @@ NEXT_PUBLIC_S3_BUCKET=your-s3-bucket
   }
 }
 ```
+
+## Core Technologies
+- **Frontend**: Next.js 14 with App Router, TypeScript, Tailwind CSS
+- **Backend**: AWS Amplify Gen 2
+- **Authentication**: AWS Cognito with email/username login
+- **Database**: DynamoDB via Amplify Gen 2 Data
+- **UI Components**: Shadcn/ui components
+- **State Management**: React Context (Auth + Workspace contexts)
+
+## Critical Amplify Gen 2 Field Naming Conventions
+
+**🚨 FUNDAMENTAL RULE**: Amplify Gen 2 auto-generates an `id` field for every model. This is the PRIMARY KEY and should be used for:
+- URL routing/parameters
+- Model relationships and references  
+- Database lookups and queries
+- Navigation between records
+
+**Custom business fields** (like `workspaceId`, `userId`, `kioskId`, `ticketId`) are separate identifiers for business logic, NOT for database operations.
+
+### Field Usage Patterns:
+
+**✅ CORRECT Usage:**
+```typescript
+// URL routing - use Amplify id
+/workspace/[id]/dashboard  // id = Amplify auto-generated id
+
+// Model relationships - use Amplify id  
+WorkspaceUser.workspaceId → references Workspace.id
+Ticket.kioskId → references Kiosk.id
+Ticket.assigneeId → references User.id
+
+// Database operations - use Amplify id
+client.models.Workspace.get({ id: amplifyId })
+client.models.User.get({ id: amplifyUserId })
+```
+
+**❌ INCORRECT Usage:**
+```typescript
+// Don't use custom business IDs for database operations
+client.models.Workspace.get({ id: workspace.workspaceId }) // WRONG
+client.models.Workspace.list({ filter: { workspaceId: { eq: id } } }) // WRONG for lookups
+
+// Don't confuse business IDs with Amplify IDs
+WorkspaceUser.workspaceId → Workspace.workspaceId // WRONG - should reference Workspace.id
+```
+
+### Model Field Mapping:
+
+**User Model:**
+- `User.id` → Amplify auto-generated primary key (for relationships)
+- `User.userId` → Custom business identifier  
+- `User.cognitoId` → Cognito user identifier
+
+**Workspace Model:**
+- `Workspace.id` → Amplify auto-generated primary key (for relationships/URLs)
+- `Workspace.workspaceId` → Custom business identifier
+
+**WorkspaceUser Model:**
+- `WorkspaceUser.id` → Amplify auto-generated primary key
+- `WorkspaceUser.workspaceId` → References `Workspace.id` (NOT Workspace.workspaceId)
+- `WorkspaceUser.userId` → References `User.id` (NOT User.userId)
+
+**Kiosk Model:**
+- `Kiosk.id` → Amplify auto-generated primary key (for relationships/URLs)
+- `Kiosk.kioskId` → Custom business identifier
+- `Kiosk.workspaceId` → References `Workspace.id`
+
+**Ticket Model:**
+- `Ticket.id` → Amplify auto-generated primary key (for relationships/URLs)  
+- `Ticket.ticketId` → Custom business identifier
+- `Ticket.workspaceId` → References `Workspace.id`
+- `Ticket.kioskId` → References `Kiosk.id`
+- `Ticket.reporterId` → References `User.id`
+- `Ticket.assigneeId` → References `User.id`
+
+## Data Schema

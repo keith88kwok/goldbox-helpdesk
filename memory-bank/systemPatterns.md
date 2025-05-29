@@ -324,3 +324,83 @@ useEffect(() => {
 - **Client Error Handling**: Handle errors from Amplify client operations
 - **User Feedback**: Toast notifications and error states
 - **Logging**: Structured logging for debugging 
+
+## Critical: Amplify Gen 2 Field Naming Conventions
+
+**🚨 NEVER CONFUSE AGAIN**: The system uses TWO types of identifiers for every model:
+
+### 1. Amplify Auto-Generated `id` (Primary Key)
+- **Purpose**: Database primary key, relationships, URL routing
+- **Format**: UUID-like string (e.g., "46d455e9-6e2e-429b-96e3-d0b239db800f")
+- **Usage**: ALL database operations, model relationships, URL parameters
+
+### 2. Custom Business ID (e.g., `workspaceId`, `userId`, `kioskId`)
+- **Purpose**: Business logic, human-readable identifiers, display
+- **Format**: Custom format (e.g., "workspace-1748506761120", "user-12345")
+- **Usage**: Business logic, reports, human-readable references
+
+### Current Data Relationships (AS IMPLEMENTED):
+
+```typescript
+// ✅ CORRECT: How the system currently works
+User: {
+    id: "amplify-uuid-1",          // Amplify primary key
+    userId: "user-business-123",    // Custom business ID
+}
+
+Workspace: {
+    id: "amplify-uuid-2",              // Amplify primary key  
+    workspaceId: "workspace-789",      // Custom business ID
+}
+
+WorkspaceUser: {
+    id: "amplify-uuid-3",          // Amplify primary key
+    workspaceId: "amplify-uuid-2", // References Workspace.id (NOT Workspace.workspaceId!)
+    userId: "amplify-uuid-1",      // References User.id (NOT User.userId!)
+}
+```
+
+### URL Routing Pattern:
+```typescript
+// ✅ CORRECT: URLs use Amplify IDs
+/workspace/[id]/dashboard
+// where [id] = Workspace.id (e.g., "46d455e9-6e2e-429b-96e3-d0b239db800f")
+
+// ❌ WRONG: Don't use business IDs in URLs
+/workspace/[workspaceId]/dashboard 
+// where [workspaceId] would be "workspace-789"
+```
+
+### Database Operation Patterns:
+```typescript
+// ✅ CORRECT: Use Amplify ID for database operations
+client.models.Workspace.get({ id: "46d455e9-6e2e-429b-96e3-d0b239db800f" })
+
+// ✅ CORRECT: Use business ID for filtering/searching
+client.models.Workspace.list({ 
+    filter: { workspaceId: { eq: "workspace-789" } } 
+})
+
+// ❌ WRONG: Don't use business ID for get operations
+client.models.Workspace.get({ id: "workspace-789" })
+```
+
+### Variable Naming Convention:
+```typescript
+// When working with Amplify IDs:
+const workspaceAmplifyId = "46d455e9-6e2e-429b-96e3-d0b239db800f";
+const id = params.id; // From URL parameter
+
+// When working with business IDs:
+const workspaceBusinessId = "workspace-789";
+const customWorkspaceId = workspace.workspaceId; // Custom field
+```
+
+**MEMORY AID**: 
+- URL params = Amplify `id`
+- Database relationships = Amplify `id` 
+- Display/business logic = Custom business IDs
+- `.get()` operations = Amplify `id`
+- `.list()` filters = Can use either, depending on need
+
+## Authentication & Authorization Patterns 
