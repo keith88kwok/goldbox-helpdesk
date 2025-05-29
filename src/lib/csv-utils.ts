@@ -78,8 +78,7 @@ export const SAMPLE_KIOSK_DATA = [
 export const generateCSVTemplate = (config: Partial<CSVTemplateConfig> = {}): string => {
     const {
         includeHeaders = true,
-        includeSampleData = true,
-        filename = 'kiosk-import-template.csv'
+        includeSampleData = true
     } = config;
 
     const rows: string[][] = [];
@@ -184,7 +183,7 @@ export const validateKioskRow = (rowData: string[], rowNumber: number, existingA
     // Validate status
     if (!status?.trim()) {
         errors.push('Status is required');
-    } else if (!VALID_KIOSK_STATUSES.includes(status.trim().toUpperCase() as any)) {
+    } else if (!VALID_KIOSK_STATUSES.includes(status.trim().toUpperCase() as KioskCSVRow['status'])) {
         errors.push(`Status must be one of: ${VALID_KIOSK_STATUSES.join(', ')}`);
     }
     

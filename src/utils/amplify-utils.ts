@@ -25,7 +25,7 @@ export async function AuthGetCurrentUserServer() {
     try {
         const user = await runWithAmplifyServerContext({
             nextServerContext: { cookies },
-            operation: (contextSpec: any) => getCurrentUser(contextSpec),
+            operation: (contextSpec: Parameters<typeof getCurrentUser>[0]) => getCurrentUser(contextSpec),
         });
         return user;
     } catch (error) {
@@ -42,7 +42,7 @@ export async function getServerAuthSession() {
     try {
         const session = await runWithAmplifyServerContext({
             nextServerContext: { cookies },
-            operation: (contextSpec: any) => fetchAuthSession(contextSpec),
+            operation: (contextSpec: Parameters<typeof fetchAuthSession>[0]) => fetchAuthSession(contextSpec),
         });
         return session;
     } catch (error) {

@@ -65,7 +65,7 @@ export default function AddCommentForm({
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center space-x-2 text-gray-600">
                     <MessageSquare className="h-4 w-4" />
-                    <span className="text-sm">You don't have permission to add comments to this ticket.</span>
+                    <span className="text-sm">You don&apos;t have permission to add comments to this ticket.</span>
                 </div>
             </div>
         );

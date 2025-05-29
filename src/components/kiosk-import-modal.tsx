@@ -4,14 +4,11 @@ import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { 
     Upload, 
     Download, 
     FileText, 
-    AlertCircle, 
     CheckCircle, 
-    X,
     ArrowRight,
     ArrowLeft,
     Loader2
@@ -21,8 +18,7 @@ import {
     parseKioskCSV, 
     getTemplateInstructions,
     exportErrorsToCSV,
-    type CSVParseResult,
-    type ParsedKioskRow
+    type CSVParseResult
 } from '@/lib/csv-utils';
 import { client } from '@/lib/amplify-client';
 

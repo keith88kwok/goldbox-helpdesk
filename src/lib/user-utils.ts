@@ -1,7 +1,6 @@
 import { client, type Schema } from './amplify-client';
 
 type User = Schema['User']['type'];
-type WorkspaceUser = Schema['WorkspaceUser']['type'];
 
 /**
  * User management utilities for the helpdesk system

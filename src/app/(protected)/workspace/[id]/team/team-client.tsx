@@ -1,34 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { type TeamMember, type TeamManagementData, type AvailableUser } from '@/lib/server/team-utils';
+import { type TeamManagementData, type AvailableUser } from '@/lib/server/team-utils';
 import { client } from '@/lib/amplify-client';
 import { updateUserRoleAction, removeUserAction, getAvailableUsersAction } from './actions';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { UserSelect } from '@/components/ui/user-select';
-import { UserMenu } from '@/components/ui/user-menu';
 import { 
-    Users, 
-    ArrowLeft, 
-    Plus, 
     Search, 
+    Plus, 
     MoreVertical,
     UserPlus,
     UserMinus,
     Settings,
-    Mail,
-    Calendar,
+    ArrowLeft,
+    Users,
     Loader2,
-    ToggleLeft,
-    ToggleRight
+    Mail,
+    Calendar
 } from 'lucide-react';
+import { UserSelect } from '@/components/ui/user-select';
+import { UserMenu } from '@/components/ui/user-menu';
 
 interface TeamClientProps extends TeamManagementData {
     workspaceId: string;
@@ -69,13 +67,7 @@ export default function TeamClient({
     });
 
     // Load available users when modal opens
-    useEffect(() => {
-        if (isInviteModalOpen && canManageTeam && availableUsers.length === 0) {
-            loadAvailableUsers();
-        }
-    }, [isInviteModalOpen, canManageTeam, availableUsers.length]);
-
-    const loadAvailableUsers = async () => {
+    const loadAvailableUsers = useCallback(async () => {
         setIsLoadingUsers(true);
         try {
             const result = await getAvailableUsersAction(workspaceId);
@@ -89,7 +81,13 @@ export default function TeamClient({
         } finally {
             setIsLoadingUsers(false);
         }
-    };
+    }, [workspaceId]);
+
+    useEffect(() => {
+        if (isInviteModalOpen && canManageTeam && availableUsers.length === 0) {
+            loadAvailableUsers();
+        }
+    }, [isInviteModalOpen, canManageTeam, availableUsers.length, loadAvailableUsers]);
 
     // Handle user selection from dropdown
     const handleUserSelect = (user: AvailableUser | null) => {
@@ -182,7 +180,7 @@ export default function TeamClient({
                 givenName: inviteForm.givenName,
                 familyName: inviteForm.familyName,
                 workspaceId: workspaceId,
-                role: inviteForm.role,
+                role: inviteForm.role as 'ADMIN' | 'MEMBER' | 'VIEWER',
                 sendInviteEmail: inviteForm.sendInviteEmail,
             });
 
@@ -455,7 +453,7 @@ Login URL: ${window.location.origin}/auth/login`
                                                     <select
                                                         id="role"
                                                         value={inviteForm.role}
-                                                        onChange={(e) => setInviteForm(prev => ({ ...prev, role: e.target.value as any }))}
+                                                        onChange={(e) => setInviteForm(prev => ({ ...prev, role: e.target.value as 'ADMIN' | 'MEMBER' | 'VIEWER' }))}
                                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                     >
                                                         <option value="VIEWER">Viewer - View only access</option>

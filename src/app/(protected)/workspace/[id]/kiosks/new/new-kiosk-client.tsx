@@ -21,11 +21,10 @@ import { client } from '@/lib/amplify-client';
 
 interface NewKioskClientProps {
     workspace: SelectedWorkspace;
-    userRole: 'ADMIN' | 'MEMBER' | 'VIEWER';
     workspaceId: string;
 }
 
-export default function NewKioskClient({ workspace, userRole, workspaceId }: NewKioskClientProps) {
+export default function NewKioskClient({ workspace, workspaceId }: NewKioskClientProps) {
     const router = useRouter();
     
     // State

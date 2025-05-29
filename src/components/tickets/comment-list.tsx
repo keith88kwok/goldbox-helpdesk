@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { type TicketComment } from '@/lib/types/comment';
 import CommentCard from './comment-card';
 import AddCommentForm from './add-comment-form';
@@ -12,26 +11,16 @@ import { MessageSquare, CheckCircle } from 'lucide-react';
 const client = generateClient<Schema>();
 
 interface CommentListProps {
-    initialComments: TicketComment[];
+    comments: TicketComment[];
     ticketId: string;
-    workspaceId: string;
     userRole: 'ADMIN' | 'MEMBER' | 'VIEWER';
-    userId: string;
-    userName: string;
+    currentUserId: string;
 }
 
-export default function CommentList({
-    initialComments,
-    ticketId,
-    workspaceId,
-    userRole,
-    userId,
-    userName
-}: CommentListProps) {
-    const [comments, setComments] = useState<TicketComment[]>(initialComments);
+export default function CommentList({ comments, ticketId, userRole, currentUserId }: CommentListProps) {
+    const [commentsList, setCommentsList] = useState<TicketComment[]>(comments);
     const [isLoading, setIsLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const router = useRouter();
     const commentsEndRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom when new comments are added
@@ -40,10 +29,10 @@ export default function CommentList({
     };
 
     useEffect(() => {
-        if (comments.length > initialComments.length) {
+        if (commentsList.length > 0) {
             scrollToBottom();
         }
-    }, [comments.length, initialComments.length]);
+    }, [commentsList.length]);
 
     const handleAddComment = async (content: string) => {
         setIsLoading(true);
@@ -52,8 +41,8 @@ export default function CommentList({
             // Create optimistic comment for immediate UI update
             const optimisticComment: TicketComment = {
                 id: `temp-${Date.now()}`,
-                userId,
-                userName,
+                userId: currentUserId,
+                userName: '',
                 userRole,
                 content,
                 timestamp: new Date().toISOString(),
@@ -61,7 +50,7 @@ export default function CommentList({
             };
 
             // Add optimistic comment to UI
-            setComments(prev => [optimisticComment, ...prev]);
+            setCommentsList(prev => [optimisticComment, ...prev]);
 
             // Get current ticket data
             const { data: currentTicket, errors: fetchErrors } = await client.models.Ticket.get({
@@ -75,8 +64,8 @@ export default function CommentList({
             // Create actual comment
             const newComment: TicketComment = {
                 id: `comment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                userId,
-                userName,
+                userId: currentUserId,
+                userName: '',
                 userRole,
                 content,
                 timestamp: new Date().toISOString(),
@@ -113,7 +102,7 @@ export default function CommentList({
             }
 
             // Replace optimistic comment with real one
-            setComments(prev => [
+            setCommentsList(prev => [
                 newComment,
                 ...prev.filter(c => c.id !== optimisticComment.id)
             ]);
@@ -126,7 +115,7 @@ export default function CommentList({
             console.error('Error adding comment:', error);
 
             // Remove optimistic comment on error
-            setComments(prev => prev.filter(c => c.id !== `temp-${Date.now()}`));
+            setCommentsList(prev => prev.filter(c => c.id !== `temp-${Date.now()}`));
 
             // Re-throw error for form to handle
             throw error;
@@ -141,7 +130,7 @@ export default function CommentList({
             <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                     <MessageSquare className="h-5 w-5 mr-2" />
-                    Comments ({comments.length})
+                    Comments ({commentsList.length})
                 </h3>
                 {successMessage && (
                     <div className="flex items-center space-x-2 text-green-600 text-sm">
@@ -160,9 +149,9 @@ export default function CommentList({
             />
 
             {/* Comments list */}
-            {comments.length > 0 ? (
+            {commentsList.length > 0 ? (
                 <div className="space-y-4">
-                    {comments.map((comment) => (
+                    {commentsList.map((comment) => (
                         <CommentCard
                             key={comment.id}
                             comment={comment}

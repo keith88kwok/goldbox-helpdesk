@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
-import { client } from '@/lib/amplify-client';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '@/lib/amplify-client';
 
@@ -113,9 +112,9 @@ export default function CreateUserPage() {
                 setResult(`❌ Failed to create user: ${result.error || result.message || 'Unknown error'}`);
             }
 
-        } catch (error: any) {
-
-            setResult(`❌ Error: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            setResult(`❌ Error: ${errorMessage}`);
             console.error('Create user error:', error);
         } finally {
             setIsLoading(false);

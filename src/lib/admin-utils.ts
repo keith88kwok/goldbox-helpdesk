@@ -59,7 +59,7 @@ export async function inviteUser(request: InviteUserRequest): Promise<InviteUser
 /**
  * Validate if current user has admin permissions for the workspace
  */
-export async function hasAdminPermission(userId: string, workspaceId: string): Promise<boolean> {
+export async function hasAdminPermission(): Promise<boolean> {
     try {
         // This would check the WorkspaceUser relationship
         // Implementation depends on how you store the current user context

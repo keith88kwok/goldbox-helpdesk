@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/router';
 
 export function NavigationLoading() {
     const [isLoading, setIsLoading] = useState(false);
     const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
         setIsLoading(false);
@@ -17,20 +19,16 @@ export function NavigationLoading() {
             setIsLoading(true);
         };
 
-        const handleComplete = () => {
-            setIsLoading(false);
-        };
-
-        // Listen for page navigation events
-        window.addEventListener('beforeunload', handleStart);
-        
-        // For client-side navigation, we'll use the pathname change
-        // This will automatically be triggered by the useEffect above
+        router.events?.on('routeChangeStart', handleStart);
+        router.events?.on('routeChangeComplete', () => setIsLoading(false));
+        router.events?.on('routeChangeError', () => setIsLoading(false));
 
         return () => {
-            window.removeEventListener('beforeunload', handleStart);
+            router.events?.off('routeChangeStart', handleStart);
+            router.events?.off('routeChangeComplete', () => setIsLoading(false));
+            router.events?.off('routeChangeError', () => setIsLoading(false));
         };
-    }, []);
+    }, [router]);
 
     if (!isLoading) return null;
 

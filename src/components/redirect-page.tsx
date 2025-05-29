@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +46,11 @@ export function RedirectPage({
     const [countdown, setCountdown] = useState(autoRedirectSeconds || 0);
     const [isRedirecting, setIsRedirecting] = useState(false);
 
+    const handleRedirect = useCallback(() => {
+        setIsRedirecting(true);
+        router.push(targetUrl);
+    }, [router, targetUrl]);
+
     useEffect(() => {
         if (autoRedirectSeconds && countdown > 0) {
             const timer = setTimeout(() => {
@@ -55,12 +60,7 @@ export function RedirectPage({
         } else if (autoRedirectSeconds && countdown === 0) {
             handleRedirect();
         }
-    }, [countdown, autoRedirectSeconds]);
-
-    const handleRedirect = () => {
-        setIsRedirecting(true);
-        router.push(targetUrl);
-    };
+    }, [countdown, autoRedirectSeconds, handleRedirect]);
 
     const handleCancel = () => {
         setCountdown(0); // Stop auto-redirect

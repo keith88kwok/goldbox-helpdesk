@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
     FileText,
     Image as ImageIcon,
@@ -31,20 +32,29 @@ function ImagePreviewModal({ attachment, isOpen, onClose }: ImagePreviewModalPro
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-            <div className="relative max-w-4xl max-h-full p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div className="max-w-4xl max-h-full bg-white rounded-lg overflow-hidden">
                 <button
                     onClick={onClose}
-                    className="absolute top-2 right-2 z-10 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-75 transition-opacity"
+                    className="absolute top-4 right-4 z-10 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-75 transition-opacity"
                 >
                     <X className="h-6 w-6" />
                 </button>
 
-                <img
-                    src={attachment.url}
-                    alt={attachment.originalName}
-                    className="max-w-full max-h-full object-contain rounded-lg"
-                />
+                {attachment.url ? (
+                    <Image
+                        src={attachment.url}
+                        alt={attachment.originalName}
+                        width={500}
+                        height={500}
+                        unoptimized
+                        className="max-w-full max-h-full object-contain rounded-lg"
+                    />
+                ) : (
+                    <div className="flex items-center justify-center w-96 h-96 bg-gray-100 rounded-lg">
+                        <p className="text-gray-500">Image not available</p>
+                    </div>
+                )}
 
                 <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white p-2 rounded">
                     <p className="text-sm font-medium">{attachment.originalName}</p>
@@ -193,9 +203,12 @@ export function AttachmentList({
                                             className="w-12 h-12 rounded cursor-pointer overflow-hidden border"
                                             onClick={() => handlePreview(attachment)}
                                         >
-                                            <img
+                                            <Image
                                                 src={attachmentUrl}
                                                 alt={attachment.originalName}
+                                                width={48}
+                                                height={48}
+                                                unoptimized
                                                 className="w-full h-full object-cover hover:scale-105 transition-transform"
                                             />
                                         </div>

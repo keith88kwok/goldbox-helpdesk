@@ -166,7 +166,7 @@ export default function DashboardClient({ workspace, userRole, stats }: Dashboar
                         <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
                             <Clock className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-blue-400" />
                             <p className="text-sm sm:text-base font-medium text-gray-900">Recent Activity - Coming Soon</p>
-                            <p className="text-xs sm:text-sm mt-1 text-gray-600">We're working on bringing you real-time activity updates for your workspace.</p>
+                            <p className="text-xs sm:text-sm mt-1 text-gray-600">We&apos;re working on bringing you real-time activity updates for your workspace.</p>
                         </div>
                     </CardContent>
                 </Card>

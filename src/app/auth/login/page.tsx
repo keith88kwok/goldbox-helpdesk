@@ -2,7 +2,6 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { LoginForm } from '@/components/auth/login-form';
 import { useAuth } from '@/contexts/auth-context';
 import { useRedirect } from '@/hooks/use-redirect';

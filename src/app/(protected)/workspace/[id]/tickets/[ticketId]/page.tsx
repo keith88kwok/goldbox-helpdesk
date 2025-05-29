@@ -36,8 +36,6 @@ export default async function TicketDetailPage({ params }: PageProps) {
                 initialComments={comments}
                 initialAttachments={attachments}
                 userId={commentAccess.userId}
-                userName={commentAccess.userName}
-                canComment={commentAccess.canComment}
             />
         );
     } catch (error) {

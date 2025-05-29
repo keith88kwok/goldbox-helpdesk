@@ -41,10 +41,10 @@ export function DropdownMenu({ children }: DropdownMenuProps) {
         <div ref={dropdownRef} className="relative inline-block text-left">
             {React.Children.map(children, (child) => {
                 if (React.isValidElement(child)) {
-                    return React.cloneElement(child as any, { 
+                    return React.cloneElement(child, { 
                         isOpen, 
                         setIsOpen
-                    });
+                    } as Record<string, unknown>);
                 }
                 return child;
             })}
@@ -64,9 +64,9 @@ export function DropdownMenuTrigger({
     };
 
     if (asChild && React.isValidElement(children)) {
-        return React.cloneElement(children as any, {
+        return React.cloneElement(children, {
             onClick: handleClick
-        });
+        } as Record<string, unknown>);
     }
 
     return (
@@ -94,9 +94,9 @@ export function DropdownMenuContent({
         >
             {React.Children.map(children, (child) => {
                 if (React.isValidElement(child)) {
-                    return React.cloneElement(child as any, { 
+                    return React.cloneElement(child, { 
                         setIsOpen
-                    });
+                    } as Record<string, unknown>);
                 }
                 return child;
             })}
@@ -118,10 +118,10 @@ export function DropdownMenuItem({
     };
 
     if (asChild && React.isValidElement(children)) {
-        return React.cloneElement(children as any, {
+        return React.cloneElement(children, {
             onClick: handleClick,
             className: "block px-3 py-2 text-sm hover:bg-gray-100 rounded w-full text-left cursor-pointer text-gray-900"
-        });
+        } as Record<string, unknown>);
     }
 
     return (

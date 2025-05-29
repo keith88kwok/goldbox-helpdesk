@@ -25,11 +25,9 @@ interface TicketDetailClientProps {
     workspace: SelectedWorkspace;
     userRole: 'ADMIN' | 'MEMBER' | 'VIEWER';
     workspaceId: string;
+    userId: string;
     initialComments: TicketComment[];
     initialAttachments: Attachment[];
-    userId: string;
-    userName: string;
-    canComment: boolean;
 }
 
 // Status color mapping
@@ -45,10 +43,9 @@ export default function TicketDetailClient({
     workspace, 
     userRole,
     workspaceId,
-    initialComments,
-    initialAttachments,
     userId,
-    userName
+    initialComments,
+    initialAttachments
 }: TicketDetailClientProps) {
     const router = useRouter();
 
@@ -138,12 +135,10 @@ export default function TicketDetailClient({
                         <Card>
                             <CardContent className="p-4 sm:p-6">
                                 <CommentList
-                                    initialComments={initialComments}
+                                    comments={initialComments}
                                     ticketId={ticket.id}
-                                    workspaceId={workspaceId}
                                     userRole={userRole}
-                                    userId={userId}
-                                    userName={userName}
+                                    currentUserId={userId}
                                 />
                             </CardContent>
                         </Card>

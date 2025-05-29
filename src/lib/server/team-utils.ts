@@ -1,9 +1,8 @@
 import { getWorkspaceAccess, type SelectedWorkspace } from './workspace-utils';
-import { cookiesClient, type Schema } from '@/utils/amplify-utils';
+import { cookiesClient } from '@/utils/amplify-utils';
 import { client } from '@/lib/amplify-client';
 
 type WorkspaceRole = 'ADMIN' | 'MEMBER' | 'VIEWER';
-type WorkspaceUserType = Schema['WorkspaceUser']['type'];
 
 export interface TeamMember {
     id: string;

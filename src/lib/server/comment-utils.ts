@@ -85,7 +85,7 @@ export async function validateCommentAccess(workspaceId: string): Promise<{
             userId: user.id,
             userName: user.name
         };
-    } catch (error) {
+    } catch {
         return {
             canComment: false,
             userRole: 'VIEWER',
@@ -110,7 +110,7 @@ export async function getTicketComments(
 
     // Parse and validate comment structure
     const comments: TicketComment[] = rawComments
-        .map((comment: any) => {
+        .map((comment: unknown) => {
             try {
                 // Handle both parsed objects and JSON strings
                 const parsedComment = typeof comment === 'string' ? JSON.parse(comment) : comment;

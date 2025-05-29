@@ -166,7 +166,7 @@ export async function getAttachmentUrl(s3Key: string): Promise<string | null> {
     try {
         const urlResult = await runWithAmplifyServerContext({
             nextServerContext: { cookies },
-            operation: (contextSpec: any) => getUrl(contextSpec, {
+            operation: (contextSpec: Parameters<typeof getUrl>[0]) => getUrl(contextSpec, {
                 key: s3Key,
                 options: {
                     expiresIn: 3600 // 1 hour
@@ -297,7 +297,18 @@ export async function getTicketAttachments(ticketId: string): Promise<Attachment
             if (attString === null) continue;
             
             try {
-                const attachment: Attachment = JSON.parse(attString);
+                const attachmentData = JSON.parse(attString) as Record<string, unknown>;
+                const attachment: Attachment = {
+                    id: attachmentData.id as string,
+                    filename: attachmentData.filename as string,
+                    originalName: attachmentData.originalName as string,
+                    fileType: attachmentData.fileType as string,
+                    fileSize: attachmentData.fileSize as number,
+                    s3Key: attachmentData.s3Key as string,
+                    uploadedBy: attachmentData.uploadedBy as string,
+                    uploadedAt: attachmentData.uploadedAt as string,
+                    isImage: attachmentData.isImage as boolean
+                };
                 
                 // Get signed URL
                 const url = await getAttachmentUrl(attachment.s3Key);
@@ -469,7 +480,18 @@ export async function getKioskAttachments(kioskId: string): Promise<Attachment[]
             if (attString === null) continue;
             
             try {
-                const attachment: Attachment = JSON.parse(attString);
+                const attachmentData = JSON.parse(attString) as Record<string, unknown>;
+                const attachment: Attachment = {
+                    id: attachmentData.id as string,
+                    filename: attachmentData.filename as string,
+                    originalName: attachmentData.originalName as string,
+                    fileType: attachmentData.fileType as string,
+                    fileSize: attachmentData.fileSize as number,
+                    s3Key: attachmentData.s3Key as string,
+                    uploadedBy: attachmentData.uploadedBy as string,
+                    uploadedAt: attachmentData.uploadedAt as string,
+                    isImage: attachmentData.isImage as boolean
+                };
                 
                 // Get signed URL
                 const url = await getAttachmentUrl(attachment.s3Key);

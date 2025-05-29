@@ -2,17 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { type Schema } from '@/lib/amplify-client';
 import { type SelectedWorkspace } from '@/lib/server/workspace-utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Plus, Building2, Users, Loader2 } from 'lucide-react';
-import { client } from '@/lib/amplify-client';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, Building2, Users } from 'lucide-react';
 import { UserMenu } from '@/components/ui/user-menu';
 
 interface WorkspacesClientProps {
@@ -34,11 +29,11 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
 
     // Create workspace modal state
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [isCreating, setIsCreating] = useState(false);
-    const [createForm, setCreateForm] = useState({
-        name: '',
-        description: ''
-    });
+    // const [isCreating, setIsCreating] = useState(false);
+    // const [createForm, setCreateForm] = useState({
+    //     name: '',
+    //     description: ''
+    // });
 
     // Handle workspace selection
     const handleWorkspaceSelect = (workspaceId: string) => {
@@ -47,63 +42,10 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
         router.push(`/workspace/${workspaceId}/dashboard`);
     };
 
-    // Handle create workspace
-    const handleCreateWorkspace = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!createForm.name.trim()) return;
-
-        try {
-            setIsCreating(true);
-            console.log('Creating workspace:', createForm.name);
-
-            // Create the workspace
-            const workspaceId = `workspace-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            const { data: newWorkspace, errors: workspaceErrors } = await client.models.Workspace.create({
-                workspaceId: workspaceId,
-                name: createForm.name.trim(),
-                description: createForm.description.trim() || null,
-                createdBy: user.id
-            });
-
-            if (workspaceErrors && workspaceErrors.length > 0) {
-                console.error('Error creating workspace:', workspaceErrors);
-                throw new Error('Failed to create workspace');
-            }
-
-            if (!newWorkspace) {
-                throw new Error('Failed to create workspace');
-            }
-
-            // Add creator as admin to the workspace
-            const { data: workspaceUser, errors: userErrors } = await client.models.WorkspaceUser.create({
-                workspaceId: newWorkspace.id,
-                userId: user.id,
-                role: 'ADMIN',
-                joinedAt: new Date().toISOString()
-            });
-
-            if (userErrors && userErrors.length > 0) {
-                console.error('Error adding user to workspace:', userErrors);
-                throw new Error('Workspace created but failed to assign user');
-            }
-
-            console.log('Workspace created successfully:', newWorkspace.name);
-
-            // Reset form and close modal
-            setCreateForm({ name: '', description: '' });
-            setIsCreateModalOpen(false);
-
-            // Refresh the page to show new workspace
-            router.refresh();
-
-        } catch (error) {
-            console.error('Error creating workspace:', error);
-            // TODO: Add proper error handling/toast notification
-        } finally {
-            setIsCreating(false);
-        }
-    };
+    // Handle create workspace - commented out for now
+    // const handleCreateWorkspace = async (e: React.FormEvent) => {
+    //     // Implementation commented out
+    // };
 
     const getRoleBadgeColor = (role: string) => {
         switch (role) {
@@ -157,7 +99,7 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
                         <Building2 className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No workspaces found</h3>
                         <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-md mx-auto">
-                            You don't have access to any workspaces yet. Create your first workspace to get started.
+                            You don&apos;t have access to any workspaces yet. Create your first workspace to get started.
                         </p>
                         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                             <DialogTrigger asChild>

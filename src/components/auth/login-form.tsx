@@ -75,11 +75,14 @@ export function LoginForm({ onSwitchToSignup, onSwitchToReset }: LoginFormProps)
         try {
             await login(formData.username, formData.password);
             // If authStep is set, the component will re-render to show the appropriate form
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Login error:', error);
 
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorName = error instanceof Error && 'name' in error ? (error as Error & { name: string }).name : '';
+
             // Handle specific Cognito errors with better user guidance
-            switch (error.name) {
+            switch (errorName) {
                 case 'UserNotConfirmedException':
                     setSubmitError('Please verify your email address. Check your email for the confirmation code.');
                     break;
@@ -97,10 +100,10 @@ export function LoginForm({ onSwitchToSignup, onSwitchToReset }: LoginFormProps)
                     break;
                 default:
                     // Provide more helpful error messages for common scenarios
-                    if (error.message?.includes('User profile not found') || error.message?.includes('sync failed')) {
+                    if (errorMessage?.includes('User profile not found') || errorMessage?.includes('sync failed')) {
                         setSubmitError('Your user profile is being set up. Please try refreshing the page in a moment, or contact support if this persists.');
                     } else {
-                        setSubmitError(error.message || 'Login failed. Please try again.');
+                        setSubmitError(errorMessage || 'Login failed. Please try again.');
                     }
             }
         }
@@ -117,9 +120,10 @@ export function LoginForm({ onSwitchToSignup, onSwitchToReset }: LoginFormProps)
         try {
             await confirmNewPassword(newPasswordData.newPassword);
             router.push('/workspaces');
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Password confirmation error:', error);
-            setSubmitError(error.message || 'Failed to set new password. Please try again.');
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            setSubmitError(errorMessage || 'Failed to set new password. Please try again.');
         }
     };
 
@@ -281,7 +285,7 @@ export function LoginForm({ onSwitchToSignup, onSwitchToReset }: LoginFormProps)
 
                 {onSwitchToSignup && (
                     <div className="text-center text-sm text-gray-600">
-                        Don't have an account?{' '}
+                        Don&apos;t have an account?{' '}
                         <button
                             type="button"
                             onClick={onSwitchToSignup}

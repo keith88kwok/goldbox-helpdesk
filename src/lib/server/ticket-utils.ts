@@ -18,7 +18,7 @@ export type SelectedTicket = {
     status: string | null;
     title: string;
     description: string;
-    comments: any[] | null;
+    comments: any[] | null; // eslint-disable-line @typescript-eslint/no-explicit-any
     attachments: string[] | null;
     reportedDate: string;
     updatedDate: string | null;
@@ -161,7 +161,7 @@ export async function updateTicket(
         title: string;
         description: string;
         maintenanceTime: string;
-        comments: any[];
+        comments: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
         attachments: string[];
     }>
 ): Promise<TicketType> {
@@ -223,7 +223,7 @@ export async function searchTickets(
     const access = await getWorkspaceAccess(workspaceId);
 
     // Build filter conditions
-    const filterConditions: any[] = [
+    const filterConditions: Record<string, unknown>[] = [
         { workspaceId: { eq: workspaceId } }
     ];
 
@@ -331,5 +331,11 @@ export async function getWorkspaceUsers(workspaceId: string): Promise<{
     });
 
     const users = await Promise.all(userPromises);
-    return users.filter(user => user !== null) as any[];
+    return users.filter(user => user !== null) as {
+        id: string;
+        userId: string;
+        name: string;
+        email: string;
+        role: string;
+    }[];
 } 

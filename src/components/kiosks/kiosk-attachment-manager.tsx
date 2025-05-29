@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Paperclip, Plus, RefreshCw, Camera } from 'lucide-react';
+import { 
+    ImageIcon,
+    Loader2,
+    Plus
+} from 'lucide-react';
 import { FileUploadZone } from '../tickets/file-upload-zone';
 import { AttachmentList } from '../tickets/attachment-list';
 import type { Attachment, AttachmentUploadProgress } from '@/lib/types/attachment';
@@ -214,7 +218,7 @@ export function KioskAttachmentManager({
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                    <Camera className="h-5 w-5 text-gray-500" />
+                    <ImageIcon className="h-5 w-5 text-gray-500" />
                     <h3 className="text-lg font-medium text-gray-900">
                         Location Photos & Documents {attachments.length > 0 && `(${attachments.length})`}
                     </h3>
@@ -228,7 +232,7 @@ export function KioskAttachmentManager({
                         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
                         title="Refresh attachments"
                     >
-                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        <Loader2 className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                     </button>
 
                     {/* Add Photos Button */}

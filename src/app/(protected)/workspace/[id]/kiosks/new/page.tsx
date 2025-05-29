@@ -28,7 +28,6 @@ export default async function NewKioskPage({ params }: PageProps) {
         return (
             <NewKioskClient
                 workspace={workspace}
-                userRole={userRole}
                 workspaceId={id}
             />
         );

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { signIn, signUp, signOut, getCurrentUser, confirmSignUp, resetPassword, confirmResetPassword, confirmSignIn } from 'aws-amplify/auth';
 import { client } from '@/lib/amplify-client';
 import type { Schema } from '@/lib/amplify-client';
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isAuthenticated = !!user;
 
     // Load user data from database with better error handling
-    const loadUserData = async (cognitoUser: { username: string; signInDetails?: { loginId?: string } }): Promise<User | null> => {
+    const loadUserData = useCallback(async (cognitoUser: { username: string; signInDetails?: { loginId?: string } }): Promise<User | null> => {
         try {
             const { data: dbUser } = await client.models.User.get({
                 id: cognitoUser.username
@@ -152,74 +152,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setAuthError('Failed to load user profile. Please try refreshing the page.');
             return null;
         }
-    };
+    }, []);
 
     // Check authentication status on mount with better error handling
-    const checkAuthStatus = async () => {
-        console.log('🔍 AuthContext - Checking initial auth status...');
+    const checkAuthStatus = useCallback(async () => {
+        setIsInitializing(true);
+        setAuthError(null);
         
-        // Safari-specific debugging
-        if (typeof window !== 'undefined') {
-            const userAgent = navigator.userAgent;
-            const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent);
-            const isLocalhost = window.location.hostname === 'localhost';
-            
-            console.log('Browser info:', {
-                isSafari,
-                isLocalhost,
-                userAgent: userAgent.substring(0, 50) + '...',
-                cookiesEnabled: navigator.cookieEnabled,
-                protocol: window.location.protocol
-            });
-
-            if (isSafari) {
-                console.log('🦁 Safari detected - checking storage capabilities...');
-                try {
-                    localStorage.setItem('safari-test', 'test');
-                    localStorage.removeItem('safari-test');
-                    console.log('✅ localStorage available in Safari');
-                } catch (error) {
-                    console.warn('❌ localStorage blocked in Safari:', error);
-                }
-            }
-        }
-
         try {
+            console.log('Checking authentication status...');
             const cognitoUser = await getCurrentUser();
-            console.log('✅ AuthContext - User found in Cognito:', cognitoUser.username);
+            console.log('Cognito user found:', cognitoUser.username);
             
             const userData = await loadUserData(cognitoUser);
-
+            
             if (userData) {
-                console.log('✅ AuthContext - User data loaded successfully');
+                console.log('User data loaded successfully:', userData.email);
                 setUser(userData);
-                setAuthError(null); // Clear any previous errors
-                // Set default workspace to first one
+                
+                // Set default workspace if user has any
                 if (userData.workspaces.length > 0) {
                     setCurrentWorkspace(userData.workspaces[0].workspace);
+                    console.log('Default workspace set:', userData.workspaces[0].workspace.name);
                 }
             } else {
-                console.log('⚠️ AuthContext - User found in Cognito but database sync failed');
-                // Don't set user to null immediately - let user try to refresh
-                // setUser(null);
+                console.log('No user data found in database');
+                setUser(null);
                 setCurrentWorkspace(null);
             }
         } catch (error) {
-            // User not authenticated
-            console.log('❌ AuthContext - No authenticated user found:', error);
+            console.log('No authenticated user found:', error);
             setUser(null);
             setCurrentWorkspace(null);
-            setAuthError(null); // Clear auth errors for unauthenticated state
+            setAuthStep(null);
+            setTempUsername(null);
         } finally {
-            console.log('🏁 AuthContext - Initial auth check complete');
-            setIsLoading(false);
             setIsInitializing(false);
         }
-    };
+    }, [loadUserData]);
 
     useEffect(() => {
         checkAuthStatus();
-    }, []);
+    }, [checkAuthStatus]);
 
     // Auth methods with better error handling
     const login = async (username: string, password: string) => {
