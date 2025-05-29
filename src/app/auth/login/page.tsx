@@ -5,20 +5,22 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { LoginForm } from '@/components/auth/login-form';
 import { useAuth } from '@/contexts/auth-context';
+import { useRedirect } from '@/hooks/use-redirect';
 
 export default function LoginPage() {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading, isInitializing } = useAuth();
     const router = useRouter();
+    const { redirectToWorkspaces } = useRedirect();
 
     useEffect(() => {
-        // Redirect authenticated users to dashboard
-        if (!isLoading && isAuthenticated) {
-            router.push('/dashboard');
+        // Redirect authenticated users to workspaces with a friendly message
+        if (!isLoading && !isInitializing && isAuthenticated) {
+            redirectToWorkspaces('You are already logged in! Please select a workspace to continue.');
         }
-    }, [isAuthenticated, isLoading, router]);
+    }, [isAuthenticated, isLoading, isInitializing, redirectToWorkspaces]);
 
     // Show loading state while checking authentication
-    if (isLoading) {
+    if (isLoading || isInitializing) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -63,8 +65,8 @@ export default function LoginPage() {
                 <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                     <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
                         <LoginForm
-                            onSwitchToSignup={() => window.location.href = '/auth/signup'}
-                            onSwitchToReset={() => window.location.href = '/auth/reset'}
+                            onSwitchToSignup={() => router.push('/auth/signup')}
+                            onSwitchToReset={() => router.push('/auth/reset')}
                         />
                     </div>
                 </div>

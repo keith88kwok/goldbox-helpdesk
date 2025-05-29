@@ -1,26 +1,21 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { useWorkspace } from '@/contexts/workspace-context';
+import { useRouter } from 'next/navigation';
+import { type SelectedWorkspace } from '@/lib/server/workspace-utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Users, Wrench, Ticket, ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
-export default function WorkspaceDashboard() {
-    const params = useParams();
+interface DashboardClientProps {
+    workspace: SelectedWorkspace;
+    userRole: 'ADMIN' | 'MEMBER' | 'VIEWER';
+}
+
+export default function DashboardClient({ workspace, userRole }: DashboardClientProps) {
     const router = useRouter();
-    const { user } = useAuth();
-    const { currentWorkspace, userRole } = useWorkspace();
 
-    const id = params.id as string;
-
-    // Note: Authentication and workspace access checks are now handled by RouteGuard
-    // This component can focus purely on rendering the dashboard
-
-    const getRoleBadgeColor = (role: string | null) => {
+    const getRoleBadgeColor = (role: string) => {
         switch (role) {
             case 'ADMIN':
                 return 'bg-red-100 text-red-800';
@@ -51,20 +46,17 @@ export default function WorkspaceDashboard() {
                             </Button>
                             <div>
                                 <h1 className="text-xl font-semibold text-gray-900">
-                                    {currentWorkspace?.name || 'Loading...'}
+                                    {workspace.name}
                                 </h1>
                                 <p className="text-sm text-gray-600">
-                                    {currentWorkspace?.description || 'No description'}
+                                    {workspace.description || 'No description'}
                                 </p>
                             </div>
                         </div>
                         <div className="flex items-center space-x-4">
                             <Badge className={getRoleBadgeColor(userRole)}>
-                                {userRole || 'VIEWER'}
+                                {userRole}
                             </Badge>
-                            <span className="text-sm text-gray-600">
-                                {user?.name}
-                            </span>
                         </div>
                     </div>
                 </div>
@@ -75,7 +67,7 @@ export default function WorkspaceDashboard() {
                 {/* Welcome Section */}
                 <div className="mb-8">
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                        Welcome to {currentWorkspace?.name || 'your workspace'}
+                        Welcome to {workspace.name}
                     </h2>
                     <p className="text-gray-600">
                         Manage your kiosk maintenance activities from this workspace dashboard.
@@ -101,7 +93,7 @@ export default function WorkspaceDashboard() {
                             </p>
                             <Button
                                 className="w-full"
-                                onClick={() => router.push(`/workspace/${id}/kiosks`)}
+                                onClick={() => router.push(`/workspace/${workspace.id}/kiosks`)}
                             >
                                 View Kiosks
                             </Button>
@@ -185,7 +177,7 @@ export default function WorkspaceDashboard() {
                     <Card>
                         <CardHeader className="pb-2">
                             <CardDescription>Your Role</CardDescription>
-                            <CardTitle className="text-lg">{userRole || 'VIEWER'}</CardTitle>
+                            <CardTitle className="text-lg">{userRole}</CardTitle>
                         </CardHeader>
                     </Card>
                 </div>

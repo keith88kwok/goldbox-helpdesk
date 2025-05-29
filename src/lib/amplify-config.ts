@@ -7,8 +7,10 @@ let isConfigured = false;
 export function configureAmplify() {
     if (!isConfigured) {
         try {
-            Amplify.configure(outputs);
-            console.log('Amplify configured globally');
+            Amplify.configure(outputs, {
+                ssr: true
+            });
+            console.log('Amplify configured globally with SSR support');
             isConfigured = true;
         } catch (error) {
             console.error('Failed to configure Amplify:', error);

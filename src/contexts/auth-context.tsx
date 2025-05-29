@@ -26,6 +26,7 @@ interface AuthContextType {
     user: User | null;
     currentWorkspace: Schema['Workspace']['type'] | null;
     isLoading: boolean;
+    isInitializing: boolean;
     isAuthenticated: boolean;
     authStep: string | null;
     tempUsername: string | null;
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [currentWorkspace, setCurrentWorkspace] = useState<Schema['Workspace']['type'] | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isInitializing, setIsInitializing] = useState(true);
     const [authStep, setAuthStep] = useState<string | null>(null);
     const [tempUsername, setTempUsername] = useState<string | null>(null);
 
@@ -104,23 +106,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Check authentication status on mount
     const checkAuthStatus = async () => {
+        console.log('🔍 AuthContext - Checking initial auth status...');
         try {
             const cognitoUser = await getCurrentUser();
+            console.log('✅ AuthContext - User found in Cognito:', cognitoUser.username);
+            
             const userData = await loadUserData(cognitoUser);
 
             if (userData) {
+                console.log('✅ AuthContext - User data loaded successfully');
                 setUser(userData);
                 // Set default workspace to first one
                 if (userData.workspaces.length > 0) {
                     setCurrentWorkspace(userData.workspaces[0].workspace);
                 }
+            } else {
+                console.log('⚠️ AuthContext - User found in Cognito but not in database');
+                setUser(null);
+                setCurrentWorkspace(null);
             }
         } catch (error) {
             // User not authenticated
+            console.log('❌ AuthContext - No authenticated user found');
             setUser(null);
             setCurrentWorkspace(null);
         } finally {
+            console.log('🏁 AuthContext - Initial auth check complete');
             setIsLoading(false);
+            setIsInitializing(false);
         }
     };
 
@@ -298,6 +311,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         currentWorkspace,
         isLoading,
+        isInitializing,
         isAuthenticated,
         authStep,
         tempUsername,

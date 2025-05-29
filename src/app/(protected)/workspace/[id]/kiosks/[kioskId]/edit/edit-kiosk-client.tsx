@@ -1,8 +1,8 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { useWorkspace } from '@/contexts/workspace-context';
+import { useRouter } from 'next/navigation';
+import { type SelectedKiosk } from '@/lib/server/kiosk-utils';
+import { type SelectedWorkspace } from '@/lib/server/workspace-utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,57 +20,29 @@ import {
 import { useState } from 'react';
 import { client } from '@/lib/amplify-client';
 
-export default function NewKioskPage() {
-    const params = useParams();
+interface EditKioskClientProps {
+    kiosk: SelectedKiosk;
+    workspace: SelectedWorkspace;
+    userRole: 'ADMIN' | 'MEMBER' | 'VIEWER';
+    workspaceId: string;
+}
+
+export default function EditKioskClient({ kiosk, workspace, workspaceId }: EditKioskClientProps) {
     const router = useRouter();
-    const { user } = useAuth();
-    const { currentWorkspace, userRole } = useWorkspace();
-    
-    const id = params.id as string;
     
     // State
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     
-    // Form state
+    // Form state - pre-populate with existing kiosk data
     const [formData, setFormData] = useState({
-        address: '',
-        locationDescription: '',
-        description: '',
-        remark: '',
-        status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE' | 'RETIRED'
+        address: kiosk.address || '',
+        locationDescription: kiosk.locationDescription || '',
+        description: kiosk.description || '',
+        remark: kiosk.remark || '',
+        status: (kiosk.status as 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE' | 'RETIRED') || 'ACTIVE'
     });
-
-    // Check permissions
-    const canCreateKiosk = userRole === 'ADMIN' || userRole === 'MEMBER';
-
-    if (!canCreateKiosk) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <Card className="w-full max-w-md">
-                    <CardHeader>
-                        <CardTitle className="flex items-center text-red-600">
-                            <AlertCircle className="h-5 w-5 mr-2" />
-                            Access Denied
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-gray-600 mb-4">
-                            You don't have permission to create kiosks in this workspace.
-                        </p>
-                        <Button 
-                            variant="outline" 
-                            onClick={() => router.push(`/workspace/${id}/kiosks`)}
-                            className="w-full"
-                        >
-                            Back to Kiosks
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
 
     const handleInputChange = (field: string, value: string) => {
         setFormData(prev => ({
@@ -84,11 +56,6 @@ export default function NewKioskPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        if (!currentWorkspace?.id) {
-            setError('No workspace selected');
-            return;
-        }
 
         // Basic validation
         if (!formData.address.trim()) {
@@ -100,60 +67,54 @@ export default function NewKioskPage() {
             setIsLoading(true);
             setError(null);
 
-            const { data: newKiosk, errors } = await client.models.Kiosk.create({
-                kioskId: `kiosk-${Date.now()}`, // Generate a unique kiosk ID
+            const { data: updatedKiosk, errors } = await client.models.Kiosk.update({
+                id: kiosk.id,
                 address: formData.address.trim(),
                 locationDescription: formData.locationDescription.trim() || null,
                 description: formData.description.trim() || null,
                 remark: formData.remark.trim() || null,
                 status: formData.status,
-                workspaceId: currentWorkspace.id,
-                locationAttachments: [] // Start with empty attachments array
+                updatedAt: new Date().toISOString()
             });
 
             if (errors && errors.length > 0) {
-                console.error('Error creating kiosk:', errors);
-                setError('Failed to create kiosk. Please try again.');
+                console.error('Error updating kiosk:', errors);
+                setError('Failed to update kiosk. Please try again.');
                 return;
             }
 
-            console.log('Kiosk created successfully:', newKiosk);
+            console.log('Kiosk updated successfully:', updatedKiosk);
             setSuccess(true);
             
             // Redirect after success
             setTimeout(() => {
-                router.push(`/workspace/${id}/kiosks`);
+                router.push(`/workspace/${workspaceId}/kiosks/${kiosk.id}`);
             }, 2000);
 
         } catch (err) {
-            console.error('Error creating kiosk:', err);
-            setError('Failed to create kiosk. Please try again.');
+            console.error('Error updating kiosk:', err);
+            setError('Failed to update kiosk. Please try again.');
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleCancel = () => {
-        router.push(`/workspace/${id}/kiosks`);
+        router.push(`/workspace/${workspaceId}/kiosks/${kiosk.id}`);
     };
 
+    // Show success message
     if (success) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <Card className="w-full max-w-md">
-                    <CardHeader>
-                        <CardTitle className="flex items-center text-green-600">
-                            <CheckCircle className="h-5 w-5 mr-2" />
-                            Kiosk Created Successfully
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-gray-600 mb-4">
-                            Your new kiosk has been added to the workspace.
+                    <CardContent className="flex flex-col items-center justify-center p-6">
+                        <CheckCircle className="h-16 w-16 text-green-600 mb-4" />
+                        <h2 className="text-xl font-semibold text-gray-900 mb-2">Kiosk Updated Successfully!</h2>
+                        <p className="text-sm text-gray-600 text-center mb-4">
+                            The kiosk information has been updated. Redirecting you back to the kiosk details...
                         </p>
-                        <p className="text-sm text-gray-500">
-                            Redirecting you back to the kiosks list...
-                        </p>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                     </CardContent>
                 </Card>
             </div>
@@ -170,20 +131,20 @@ export default function NewKioskPage() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => router.push(`/workspace/${id}/kiosks`)}
+                                onClick={() => router.push(`/workspace/${workspaceId}/kiosks/${kiosk.id}`)}
                                 className="mr-4"
                             >
                                 <ArrowLeft className="h-4 w-4 mr-2" />
-                                Back to Kiosks
+                                Back to Kiosk
                             </Button>
                             <div className="flex items-center">
                                 <Building2 className="h-6 w-6 text-blue-600 mr-3" />
                                 <div>
                                     <h1 className="text-xl font-semibold text-gray-900">
-                                        Add New Kiosk
+                                        Edit Kiosk
                                     </h1>
                                     <p className="text-sm text-gray-600">
-                                        {currentWorkspace?.name || 'Loading...'}
+                                        {workspace.name}
                                     </p>
                                 </div>
                             </div>
@@ -264,7 +225,7 @@ export default function NewKioskPage() {
                             {/* Status */}
                             <div>
                                 <Label htmlFor="status">
-                                    Initial Status
+                                    Status
                                 </Label>
                                 <select
                                     id="status"
@@ -305,12 +266,12 @@ export default function NewKioskPage() {
                                     {isLoading ? (
                                         <>
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                            Creating...
+                                            Updating...
                                         </>
                                     ) : (
                                         <>
                                             <Save className="h-4 w-4 mr-2" />
-                                            Create Kiosk
+                                            Update Kiosk
                                         </>
                                     )}
                                 </Button>

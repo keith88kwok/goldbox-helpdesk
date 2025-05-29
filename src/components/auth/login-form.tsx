@@ -112,7 +112,7 @@ export function LoginForm({ onSwitchToSignup, onSwitchToReset }: LoginFormProps)
 
         try {
             await confirmNewPassword(newPasswordData.newPassword);
-            router.push('/dashboard');
+            router.push('/workspaces');
         } catch (error: any) {
             console.error('Password confirmation error:', error);
             setSubmitError(error.message || 'Failed to set new password. Please try again.');

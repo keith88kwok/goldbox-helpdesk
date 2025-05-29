@@ -1,78 +1,49 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { useWorkspace } from '@/contexts/workspace-context';
+import { useRouter } from 'next/navigation';
+import { type SelectedKiosk } from '@/lib/server/kiosk-utils';
+import { type SelectedWorkspace } from '@/lib/server/workspace-utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-    Building2, 
-    Plus, 
-    ArrowLeft, 
+import {
+    Building2,
+    Plus,
+    ArrowLeft,
     Search,
     MapPin,
     Settings,
     AlertCircle,
     CheckCircle,
-    Clock
+    Clock,
+    Upload
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { client } from '@/lib/amplify-client';
-import { type Schema } from '@/lib/amplify-client';
+import { useState } from 'react';
+import { KioskImportModal } from '@/components/kiosk-import-modal';
 
-type KioskType = Schema['Kiosk']['type'];
+interface KiosksClientProps {
+    kiosks: SelectedKiosk[];
+    workspace: SelectedWorkspace;
+    userRole: 'ADMIN' | 'MEMBER' | 'VIEWER';
+}
 
-export default function KiosksPage() {
-    const params = useParams();
+export default function KiosksClient({ kiosks, workspace, userRole }: KiosksClientProps) {
     const router = useRouter();
-    const { user } = useAuth();
-    const { currentWorkspace, userRole } = useWorkspace();
-    
-    const id = params.id as string;
-    
+
     // State
-    const [kiosks, setKiosks] = useState<KioskType[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showImportModal, setShowImportModal] = useState(false);
 
-    // Fetch kiosks for current workspace
-    useEffect(() => {
-        const fetchKiosks = async () => {
-            if (!currentWorkspace?.id) return;
-            
-            try {
-                setIsLoading(true);
-                setError(null);
-                
-                const { data: kioskData, errors } = await client.models.Kiosk.list({
-                    filter: {
-                        workspaceId: { eq: currentWorkspace.id }
-                    }
-                });
-                
-                if (errors && errors.length > 0) {
-                    console.error('Error fetching kiosks:', errors);
-                    setError('Failed to load kiosks');
-                    return;
-                }
-                
-                setKiosks(kioskData || []);
-            } catch (err) {
-                console.error('Error fetching kiosks:', err);
-                setError('Failed to load kiosks');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchKiosks();
-    }, [currentWorkspace?.id]);
+    // Handle import completion
+    const handleImportComplete = () => {
+        setShowImportModal(false);
+        // Refresh the page to show new kiosks
+        router.refresh();
+    };
 
     // Filter kiosks based on search term
-    const filteredKiosks = kiosks.filter(kiosk => 
+    const filteredKiosks = kiosks.filter(kiosk =>
         kiosk.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         kiosk.locationDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         kiosk.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -106,7 +77,7 @@ export default function KiosksPage() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => router.push(`/workspace/${id}/dashboard`)}
+                                onClick={() => router.push(`/workspace/${workspace.id}/dashboard`)}
                                 className="mr-4"
                             >
                                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -119,19 +90,29 @@ export default function KiosksPage() {
                                         Kiosks
                                     </h1>
                                     <p className="text-sm text-gray-600">
-                                        {currentWorkspace?.name || 'Loading...'}
+                                        {workspace.name}
                                     </p>
                                 </div>
                             </div>
                         </div>
                         {canEditKiosks && (
-                            <Button
-                                onClick={() => router.push(`/workspace/${id}/kiosks/new`)}
-                                className="flex items-center"
-                            >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Kiosk
-                            </Button>
+                            <div className="flex space-x-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowImportModal(true)}
+                                    className="flex items-center"
+                                >
+                                    <Upload className="h-4 w-4 mr-2" />
+                                    Import Kiosks
+                                </Button>
+                                <Button
+                                    onClick={() => router.push(`/workspace/${workspace.id}/kiosks/new`)}
+                                    className="flex items-center"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Kiosk
+                                </Button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -152,30 +133,8 @@ export default function KiosksPage() {
                     </div>
                 </div>
 
-                {/* Loading State */}
-                {isLoading && (
-                    <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                        <p className="mt-4 text-gray-600">Loading kiosks...</p>
-                    </div>
-                )}
-
-                {/* Error State */}
-                {error && (
-                    <div className="text-center py-12">
-                        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                        <p className="text-red-600 mb-4">{error}</p>
-                        <Button 
-                            variant="outline" 
-                            onClick={() => window.location.reload()}
-                        >
-                            Try Again
-                        </Button>
-                    </div>
-                )}
-
                 {/* Empty State */}
-                {!isLoading && !error && filteredKiosks.length === 0 && kiosks.length === 0 && (
+                {filteredKiosks.length === 0 && kiosks.length === 0 && (
                     <div className="text-center py-12">
                         <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No kiosks yet</h3>
@@ -183,7 +142,7 @@ export default function KiosksPage() {
                             Get started by adding your first kiosk to this workspace.
                         </p>
                         {canEditKiosks && (
-                            <Button onClick={() => router.push(`/workspace/${id}/kiosks/new`)}>
+                            <Button onClick={() => router.push(`/workspace/${workspace.id}/kiosks/new`)}>
                                 <Plus className="h-4 w-4 mr-2" />
                                 Add First Kiosk
                             </Button>
@@ -192,15 +151,15 @@ export default function KiosksPage() {
                 )}
 
                 {/* No Search Results */}
-                {!isLoading && !error && filteredKiosks.length === 0 && kiosks.length > 0 && (
+                {filteredKiosks.length === 0 && kiosks.length > 0 && (
                     <div className="text-center py-12">
                         <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
                         <p className="text-gray-600 mb-4">
                             Try adjusting your search terms.
                         </p>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setSearchTerm('')}
                         >
                             Clear Search
@@ -209,7 +168,7 @@ export default function KiosksPage() {
                 )}
 
                 {/* Kiosks Grid */}
-                {!isLoading && !error && filteredKiosks.length > 0 && (
+                {filteredKiosks.length > 0 && (
                     <>
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-lg font-medium text-gray-900">
@@ -220,10 +179,10 @@ export default function KiosksPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredKiosks.map((kiosk) => (
-                                <Card 
-                                    key={kiosk.id} 
+                                <Card
+                                    key={kiosk.id}
                                     className="hover:shadow-lg transition-shadow cursor-pointer"
-                                    onClick={() => router.push(`/workspace/${id}/kiosks/${kiosk.id}`)}
+                                    onClick={() => router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}`)}
                                 >
                                     <CardHeader>
                                         <div className="flex items-start justify-between">
@@ -259,7 +218,7 @@ export default function KiosksPage() {
                                                     size="sm"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        router.push(`/workspace/${id}/kiosks/${kiosk.id}/edit`);
+                                                        router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}/edit`);
                                                     }}
                                                 >
                                                     <Settings className="h-3 w-3 mr-1" />
@@ -274,6 +233,14 @@ export default function KiosksPage() {
                     </>
                 )}
             </div>
+
+            {/* Import Modal */}
+            <KioskImportModal
+                isOpen={showImportModal}
+                onClose={() => setShowImportModal(false)}
+                workspaceId={workspace.id}
+                onImportComplete={handleImportComplete}
+            />
         </div>
     );
 } 
