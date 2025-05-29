@@ -117,10 +117,9 @@ export default function DashboardClient({ workspace, userRole }: DashboardClient
                             </p>
                             <Button
                                 className="w-full"
-                                disabled
-                                variant="outline"
+                                onClick={() => router.push(`/workspace/${workspace.id}/tickets`)}
                             >
-                                Coming Soon
+                                View Tickets
                             </Button>
                         </CardContent>
                     </Card>
