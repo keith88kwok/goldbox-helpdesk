@@ -17,7 +17,9 @@ import {
     AlertCircle,
     CheckCircle,
     Clock,
-    Upload
+    Upload,
+    Grid3X3,
+    List
 } from 'lucide-react';
 import { useState } from 'react';
 import { KioskImportModal } from '@/components/kiosk-import-modal';
@@ -30,27 +32,28 @@ interface KiosksClientProps {
 
 export default function KiosksClient({ kiosks, workspace, userRole }: KiosksClientProps) {
     const router = useRouter();
-
-    // State
     const [searchTerm, setSearchTerm] = useState('');
     const [showImportModal, setShowImportModal] = useState(false);
+    const [viewMode, setViewMode] = useState<'list' | 'cards'>('list'); // Default to list view
 
-    // Handle import completion
+    // Filter kiosks based on search term
+    const filteredKiosks = kiosks.filter(kiosk => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+            (kiosk.address || '').toLowerCase().includes(searchLower) ||
+            (kiosk.locationDescription || '').toLowerCase().includes(searchLower) ||
+            (kiosk.description || '').toLowerCase().includes(searchLower) ||
+            (kiosk.kioskId || '').toLowerCase().includes(searchLower)
+        );
+    });
+
     const handleImportComplete = () => {
         setShowImportModal(false);
         // Refresh the page to show new kiosks
-        router.refresh();
+        window.location.reload();
     };
 
-    // Filter kiosks based on search term
-    const filteredKiosks = kiosks.filter(kiosk =>
-        kiosk.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        kiosk.locationDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        kiosk.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    // Status badge colors
-    const getStatusBadge = (status: string | null | undefined) => {
+    const getStatusBadge = (status: string) => {
         switch (status) {
             case 'ACTIVE':
                 return <Badge className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" />Active</Badge>;
@@ -60,12 +63,242 @@ export default function KiosksClient({ kiosks, workspace, userRole }: KiosksClie
                 return <Badge className="bg-gray-100 text-gray-800"><AlertCircle className="h-3 w-3 mr-1" />Inactive</Badge>;
             case 'RETIRED':
                 return <Badge className="bg-red-100 text-red-800"><AlertCircle className="h-3 w-3 mr-1" />Retired</Badge>;
+            case 'UNKNOWN':
+                return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
             default:
                 return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
         }
     };
 
     const canEditKiosks = userRole === 'ADMIN' || userRole === 'MEMBER';
+
+    // View Toggle Component
+    const ViewToggle = () => (
+        <div className="inline-flex bg-gray-100 rounded-lg p-1 gap-1">
+            <button
+                onClick={() => setViewMode('list')}
+                className={`
+                    flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                    ${viewMode === 'list' 
+                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                    }
+                `}
+            >
+                <List className="h-4 w-4" />
+                <span className="hidden sm:inline">List</span>
+            </button>
+            <button
+                onClick={() => setViewMode('cards')}
+                className={`
+                    flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                    ${viewMode === 'cards' 
+                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                    }
+                `}
+            >
+                <Grid3X3 className="h-4 w-4" />
+                <span className="hidden sm:inline">Cards</span>
+            </button>
+        </div>
+    );
+
+    // List View Component
+    const ListView = () => (
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+                <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Location
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Description
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Created
+                            </th>
+                            {canEditKiosks && (
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            )}
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {filteredKiosks.map((kiosk) => (
+                            <tr
+                                key={kiosk.id}
+                                className="hover:bg-gray-50 cursor-pointer transition-colors"
+                                onClick={() => router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}`)}
+                            >
+                                <td className="px-6 py-4">
+                                    <div className="flex items-start">
+                                        <MapPin className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                                        <div className="min-w-0">
+                                            <div className="text-sm font-medium text-gray-900 line-clamp-1">
+                                                {kiosk.address || 'No address'}
+                                            </div>
+                                            <div className="text-sm text-gray-500 line-clamp-1">
+                                                {kiosk.locationDescription || 'No location description'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="text-sm text-gray-900 line-clamp-2">
+                                        {kiosk.description || 'No description'}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    {getStatusBadge(kiosk.status || 'UNKNOWN')}
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="text-sm text-gray-900">
+                                        {new Date(kiosk.createdAt || '').toLocaleDateString()}
+                                    </div>
+                                </td>
+                                {canEditKiosks && (
+                                    <td className="px-6 py-4">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}/edit`);
+                                            }}
+                                            className="flex items-center gap-1"
+                                        >
+                                            <Settings className="h-3 w-3" />
+                                            Edit
+                                        </Button>
+                                    </td>
+                                )}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Mobile List View */}
+            <div className="md:hidden divide-y divide-gray-200">
+                {filteredKiosks.map((kiosk) => (
+                    <div
+                        key={kiosk.id}
+                        className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}`)}
+                    >
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                            <div className="flex items-start min-w-0 flex-1">
+                                <MapPin className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-sm font-medium text-gray-900 line-clamp-1">
+                                        {kiosk.address || 'No address'}
+                                    </div>
+                                    <div className="text-sm text-gray-500 line-clamp-1 mt-1">
+                                        {kiosk.locationDescription || 'No location description'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex-shrink-0">
+                                {getStatusBadge(kiosk.status || 'UNKNOWN')}
+                            </div>
+                        </div>
+                        
+                        {kiosk.description && (
+                            <div className="text-sm text-gray-600 mb-3 line-clamp-2">
+                                {kiosk.description}
+                            </div>
+                        )}
+                        
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500">
+                                Added {new Date(kiosk.createdAt || '').toLocaleDateString()}
+                            </span>
+                            {canEditKiosks && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}/edit`);
+                                    }}
+                                    className="min-h-[44px] flex items-center gap-1"
+                                >
+                                    <Settings className="h-3 w-3" />
+                                    Edit
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    // Cards View Component (existing implementation)
+    const CardsView = () => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {filteredKiosks.map((kiosk) => (
+                <Card
+                    key={kiosk.id}
+                    className="hover:shadow-lg transition-all cursor-pointer active:scale-[0.98]"
+                    onClick={() => router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}`)}
+                >
+                    <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center mb-2">
+                                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 mr-2 flex-shrink-0" />
+                                    <CardTitle className="text-base sm:text-lg font-medium line-clamp-1">
+                                        {kiosk.address || 'No address'}
+                                    </CardTitle>
+                                </div>
+                                <CardDescription className="text-sm line-clamp-2">
+                                    {kiosk.locationDescription || 'No location description'}
+                                </CardDescription>
+                            </div>
+                            <div className="flex-shrink-0">
+                                {getStatusBadge(kiosk.status || 'UNKNOWN')}
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        {kiosk.description && (
+                            <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                                {kiosk.description}
+                            </p>
+                        )}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <span className="text-xs text-gray-500">
+                                Added {new Date(kiosk.createdAt || '').toLocaleDateString()}
+                            </span>
+                            {canEditKiosks && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}/edit`);
+                                    }}
+                                    className="w-full sm:w-auto min-h-[44px] flex items-center justify-center"
+                                >
+                                    <Settings className="h-3 w-3 mr-1" />
+                                    Edit
+                                </Button>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -168,70 +401,19 @@ export default function KiosksClient({ kiosks, workspace, userRole }: KiosksClie
                     </div>
                 )}
 
-                {/* Kiosks Grid */}
+                {/* Results Header with View Toggle */}
                 {filteredKiosks.length > 0 && (
                     <>
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
                             <h2 className="text-base sm:text-lg font-medium text-gray-900">
                                 {filteredKiosks.length} kiosk{filteredKiosks.length !== 1 ? 's' : ''} found
                                 {searchTerm && ` for "${searchTerm}"`}
                             </h2>
+                            <ViewToggle />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                            {filteredKiosks.map((kiosk) => (
-                                <Card
-                                    key={kiosk.id}
-                                    className="hover:shadow-lg transition-all cursor-pointer active:scale-[0.98]"
-                                    onClick={() => router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}`)}
-                                >
-                                    <CardHeader className="pb-3">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center mb-2">
-                                                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 mr-2 flex-shrink-0" />
-                                                    <CardTitle className="text-base sm:text-lg font-medium line-clamp-1">
-                                                        {kiosk.address || 'No address'}
-                                                    </CardTitle>
-                                                </div>
-                                                <CardDescription className="text-sm line-clamp-2">
-                                                    {kiosk.locationDescription || 'No location description'}
-                                                </CardDescription>
-                                            </div>
-                                            <div className="flex-shrink-0">
-                                                {getStatusBadge(kiosk.status)}
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="pt-0">
-                                        {kiosk.description && (
-                                            <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-                                                {kiosk.description}
-                                            </p>
-                                        )}
-                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                            <span className="text-xs text-gray-500">
-                                                Added {new Date(kiosk.createdAt || '').toLocaleDateString()}
-                                            </span>
-                                            {canEditKiosks && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        router.push(`/workspace/${workspace.id}/kiosks/${kiosk.id}/edit`);
-                                                    }}
-                                                    className="w-full sm:w-auto min-h-[44px] flex items-center justify-center"
-                                                >
-                                                    <Settings className="h-3 w-3 mr-1" />
-                                                    Edit
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+                        {/* Conditional View Rendering */}
+                        {viewMode === 'list' ? <ListView /> : <CardsView />}
                     </>
                 )}
 
