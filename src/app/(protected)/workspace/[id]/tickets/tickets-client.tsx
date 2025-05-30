@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { type SelectedTicket, type SelectedWorkspace } from '@/lib/server/ticket-utils';
 import CalendarView from '@/components/tickets/calendar-view';
+import KanbanView from '@/components/tickets/kanban-view';
 
 interface TicketsClientProps {
     tickets: SelectedTicket[];
@@ -367,7 +368,7 @@ export default function TicketsClient({
         </div>
     );
 
-    // Calendar View Placeholder
+    // Calendar View Component
     const CalendarViewComponent = () => (
         <CalendarView 
             tickets={filteredTickets}
@@ -376,13 +377,13 @@ export default function TicketsClient({
         />
     );
 
-    // Kanban View Placeholder
-    const KanbanView = () => (
-        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-            <Columns3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Kanban View</h3>
-            <p className="text-gray-600">Kanban view is coming soon! This will show tickets organized by status with drag-and-drop functionality.</p>
-        </div>
+    // Kanban View Component
+    const KanbanViewComponent = () => (
+        <KanbanView 
+            tickets={filteredTickets}
+            workspace={workspace}
+            canEditTickets={canEditTickets}
+        />
     );
 
     // Render appropriate view
@@ -393,7 +394,7 @@ export default function TicketsClient({
             case 'list':
                 return <ListView />;
             case 'kanban':
-                return <KanbanView />;
+                return <KanbanViewComponent />;
             case 'cards':
                 return <CardsView />;
             default:
