@@ -6,9 +6,13 @@ import { type SelectedWorkspace } from '@/lib/server/workspace-utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Building2, Users } from 'lucide-react';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus, Building2, Users, Loader2 } from 'lucide-react';
 import { UserMenu } from '@/components/ui/user-menu';
+import { createWorkspaceAction } from './actions';
 
 interface WorkspacesClientProps {
     userWorkspaces: Array<{
@@ -29,11 +33,12 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
 
     // Create workspace modal state
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    // const [isCreating, setIsCreating] = useState(false);
-    // const [createForm, setCreateForm] = useState({
-    //     name: '',
-    //     description: ''
-    // });
+    const [isCreating, setIsCreating] = useState(false);
+    const [createForm, setCreateForm] = useState({
+        name: '',
+        description: ''
+    });
+    const [createError, setCreateError] = useState<string | null>(null);
 
     // Handle workspace selection
     const handleWorkspaceSelect = (workspaceId: string) => {
@@ -42,10 +47,61 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
         router.push(`/workspace/${workspaceId}/dashboard`);
     };
 
-    // Handle create workspace - commented out for now
-    // const handleCreateWorkspace = async (e: React.FormEvent) => {
-    //     // Implementation commented out
-    // };
+    // Handle create workspace form submission
+    const handleCreateWorkspace = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (!createForm.name.trim()) {
+            setCreateError('Workspace name is required');
+            return;
+        }
+
+        if (createForm.name.trim().length > 100) {
+            setCreateError('Workspace name must be 100 characters or less');
+            return;
+        }
+
+        if (createForm.description.length > 500) {
+            setCreateError('Workspace description must be 500 characters or less');
+            return;
+        }
+
+        try {
+            setIsCreating(true);
+            setCreateError(null);
+
+            // Create FormData for server action
+            const formData = new FormData();
+            formData.append('name', createForm.name.trim());
+            formData.append('description', createForm.description.trim());
+
+            const result = await createWorkspaceAction(formData);
+
+            if (result.success) {
+                // Reset form and close modal
+                setCreateForm({ name: '', description: '' });
+                setIsCreateModalOpen(false);
+                
+                // Navigate to the new workspace
+                if (result.workspace) {
+                    router.push(`/workspace/${result.workspace.id}/dashboard`);
+                }
+            } else {
+                setCreateError(result.error || 'Failed to create workspace');
+            }
+        } catch (error) {
+            console.error('Error creating workspace:', error);
+            setCreateError('Failed to create workspace. Please try again.');
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
+    const handleModalClose = () => {
+        setIsCreateModalOpen(false);
+        setCreateForm({ name: '', description: '' });
+        setCreateError(null);
+    };
 
     const getRoleBadgeColor = (role: string) => {
         switch (role) {
@@ -72,7 +128,95 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
                                 Select a workspace to access kiosks and tickets
                             </p>
                         </div>
-                        <UserMenu />
+                        <div className="flex items-center gap-3">
+                            {userWorkspaces.length > 0 && (
+                                <Dialog open={isCreateModalOpen} onOpenChange={(open) => open ? setIsCreateModalOpen(true) : handleModalClose()}>
+                                    <DialogTrigger asChild>
+                                        <Button className="w-full sm:w-auto">
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Create Workspace
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="w-[95vw] max-w-md mx-auto">
+                                        <form onSubmit={handleCreateWorkspace}>
+                                            <DialogHeader>
+                                                <DialogTitle>Create New Workspace</DialogTitle>
+                                                <DialogDescription>
+                                                    Create a new workspace to manage kiosks and tickets for your organization.
+                                                </DialogDescription>
+                                            </DialogHeader>
+
+                                            <div className="space-y-4 py-4">
+                                                {createError && (
+                                                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                                        <p className="text-sm text-red-800">{createError}</p>
+                                                    </div>
+                                                )}
+
+                                                <div>
+                                                    <Label htmlFor="workspace-name-header">
+                                                        Workspace Name <span className="text-red-500">*</span>
+                                                    </Label>
+                                                    <Input
+                                                        id="workspace-name-header"
+                                                        value={createForm.name}
+                                                        onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                                                        placeholder="Enter workspace name..."
+                                                        maxLength={100}
+                                                        disabled={isCreating}
+                                                        className="mt-1"
+                                                        required
+                                                    />
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        {createForm.name.length}/100 characters
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <Label htmlFor="workspace-description-header">
+                                                        Description (Optional)
+                                                    </Label>
+                                                    <Textarea
+                                                        id="workspace-description-header"
+                                                        value={createForm.description}
+                                                        onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                                                        placeholder="Describe this workspace..."
+                                                        maxLength={500}
+                                                        disabled={isCreating}
+                                                        rows={3}
+                                                        className="mt-1"
+                                                    />
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        {createForm.description.length}/500 characters
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={handleModalClose}
+                                                    disabled={isCreating}
+                                                    className="w-full sm:w-auto"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                <Button 
+                                                    type="submit" 
+                                                    disabled={isCreating || !createForm.name.trim()}
+                                                    className="w-full sm:w-auto"
+                                                >
+                                                    {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                                    Create Workspace
+                                                </Button>
+                                            </DialogFooter>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+                            <UserMenu />
+                        </div>
                     </div>
                 </div>
 
@@ -101,13 +245,89 @@ export default function WorkspacesClient({ userWorkspaces, user }: WorkspacesCli
                         <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-md mx-auto">
                             You don&apos;t have access to any workspaces yet. Create your first workspace to get started.
                         </p>
-                        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                        <Dialog open={isCreateModalOpen} onOpenChange={(open) => open ? setIsCreateModalOpen(true) : handleModalClose()}>
                             <DialogTrigger asChild>
                                 <Button className="w-full sm:w-auto">
                                     <Plus className="h-4 w-4 mr-2" />
                                     Create Your First Workspace
                                 </Button>
                             </DialogTrigger>
+                            <DialogContent className="w-[95vw] max-w-md mx-auto">
+                                <form onSubmit={handleCreateWorkspace}>
+                                    <DialogHeader>
+                                        <DialogTitle>Create New Workspace</DialogTitle>
+                                        <DialogDescription>
+                                            Create a new workspace to manage kiosks and tickets for your organization.
+                                        </DialogDescription>
+                                    </DialogHeader>
+
+                                    <div className="space-y-4 py-4">
+                                        {createError && (
+                                            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                                <p className="text-sm text-red-800">{createError}</p>
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <Label htmlFor="workspace-name">
+                                                Workspace Name <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                                id="workspace-name"
+                                                value={createForm.name}
+                                                onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                                                placeholder="Enter workspace name..."
+                                                maxLength={100}
+                                                disabled={isCreating}
+                                                className="mt-1"
+                                                required
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {createForm.name.length}/100 characters
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="workspace-description">
+                                                Description (Optional)
+                                            </Label>
+                                            <Textarea
+                                                id="workspace-description"
+                                                value={createForm.description}
+                                                onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                                                placeholder="Describe this workspace..."
+                                                maxLength={500}
+                                                disabled={isCreating}
+                                                rows={3}
+                                                className="mt-1"
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {createForm.description.length}/500 characters
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={handleModalClose}
+                                            disabled={isCreating}
+                                            className="w-full sm:w-auto"
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button 
+                                            type="submit" 
+                                            disabled={isCreating || !createForm.name.trim()}
+                                            className="w-full sm:w-auto"
+                                        >
+                                            {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                            Create Workspace
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </DialogContent>
                         </Dialog>
                     </div>
                 ) : (

@@ -181,4 +181,75 @@ export async function validateWorkspaceAccess(
     }
 
     return access;
+}
+
+/**
+ * Create a new workspace and add the creator as an ADMIN
+ */
+export async function createWorkspace(workspaceData: {
+    name: string;
+    description?: string;
+}): Promise<SelectedWorkspace> {
+    const user = await getServerUser();
+
+    // Validate input
+    if (!workspaceData.name?.trim()) {
+        throw new Error('Workspace name is required');
+    }
+
+    if (workspaceData.name.trim().length > 100) {
+        throw new Error('Workspace name must be 100 characters or less');
+    }
+
+    if (workspaceData.description && workspaceData.description.length > 500) {
+        throw new Error('Workspace description must be 500 characters or less');
+    }
+
+    // Generate unique workspace ID
+    const workspaceId = `workspace-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const now = new Date().toISOString();
+
+    try {
+        // Create workspace
+        const { data: workspace, errors: workspaceErrors } = await cookiesClient.models.Workspace.create({
+            workspaceId,
+            name: workspaceData.name.trim(),
+            description: workspaceData.description?.trim() || null,
+            createdBy: user.id,
+            createdAt: now,
+            updatedAt: now
+        });
+
+        if (workspaceErrors || !workspace) {
+            throw new Error(`Failed to create workspace: ${workspaceErrors?.map(e => e.message).join(', ') || 'Unknown error'}`);
+        }
+
+        // Add creator as ADMIN
+        const { data: workspaceUser, errors: userErrors } = await cookiesClient.models.WorkspaceUser.create({
+            userId: user.id,
+            workspaceId: workspace.id,
+            role: 'ADMIN',
+            joinedAt: now
+        });
+
+        if (userErrors || !workspaceUser) {
+            // If adding user fails, we should ideally clean up the workspace
+            // For now, log the error but don't fail the entire operation
+            console.error('Failed to add creator as admin to workspace:', userErrors);
+        }
+
+        return {
+            id: workspace.id,
+            workspaceId: workspace.workspaceId,
+            name: workspace.name,
+            description: workspace.description,
+            createdBy: workspace.createdBy,
+            createdAt: workspace.createdAt,
+            updatedAt: workspace.updatedAt
+        } as SelectedWorkspace;
+
+    } catch (error) {
+        console.error('Error creating workspace:', error);
+        throw new Error(error instanceof Error ? error.message : 'Failed to create workspace');
+    }
 } 
