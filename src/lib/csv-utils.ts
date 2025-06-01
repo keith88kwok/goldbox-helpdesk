@@ -32,6 +32,33 @@ export interface CSVParseResult {
     hasErrors: boolean;
 }
 
+// Ticket Export Types
+export interface TicketExportData {
+    ticketId: string;
+    title: string;
+    description: string;
+    status: string;
+    kioskAddress: string;
+    kioskDescription: string;
+    reporterName: string;
+    assigneeName: string;
+    reportedDate: string;
+    scheduledDate: string;
+    updatedDate: string;
+    commentsCount: number;
+}
+
+export interface TicketExportOptions {
+    filename?: string;
+    workspaceName?: string;
+    dateRange?: {
+        from?: string;
+        to?: string;
+    };
+    totalCount?: number;
+    filteredCount?: number;
+}
+
 // Constants
 export const KIOSK_CSV_HEADERS = [
     'address',
@@ -73,6 +100,22 @@ export const SAMPLE_KIOSK_DATA = [
         'INACTIVE'
     ]
 ];
+
+// Ticket CSV Constants
+export const TICKET_CSV_HEADERS = [
+    'Ticket ID',
+    'Title',
+    'Description', 
+    'Status',
+    'Kiosk Address',
+    'Kiosk Description',
+    'Reporter',
+    'Assignee',
+    'Reported Date',
+    'Scheduled Date',
+    'Updated Date',
+    'Comments Count'
+] as const;
 
 // Template Generation
 export const generateCSVTemplate = (config: Partial<CSVTemplateConfig> = {}): string => {
@@ -313,6 +356,93 @@ export const exportErrorsToCSV = (invalidRows: ParsedKioskRow[], filename: strin
     const csvContent = [headers, ...errorData]
         .map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
         .join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+};
+
+// Ticket Export Functions
+export const generateTicketsCSV = (tickets: TicketExportData[]): string => {
+    const rows: string[][] = [];
+    
+    // Add headers
+    rows.push([...TICKET_CSV_HEADERS]);
+    
+    // Add ticket data
+    tickets.forEach(ticket => {
+        rows.push([
+            ticket.ticketId,
+            ticket.title,
+            ticket.description,
+            ticket.status,
+            ticket.kioskAddress,
+            ticket.kioskDescription,
+            ticket.reporterName,
+            ticket.assigneeName,
+            ticket.reportedDate,
+            ticket.scheduledDate,
+            ticket.updatedDate,
+            ticket.commentsCount.toString()
+        ]);
+    });
+    
+    // Convert to CSV format with proper escaping
+    const csvContent = rows
+        .map(row => row.map(cell => {
+            // Escape quotes and wrap in quotes if cell contains comma, quote, or newline
+            const escaped = cell.replace(/"/g, '""');
+            return escaped.includes(',') || escaped.includes('"') || escaped.includes('\n') 
+                ? `"${escaped}"` 
+                : escaped;
+        }).join(','))
+        .join('\n');
+    
+    return csvContent;
+};
+
+export const generateTicketFilename = (options: TicketExportOptions = {}): string => {
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+    const workspaceName = options.workspaceName?.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() || 'workspace';
+    
+    let filename = `tickets-${workspaceName}`;
+    
+    // Add date range if provided
+    if (options.dateRange?.from && options.dateRange?.to) {
+        const fromDate = new Date(options.dateRange.from).toISOString().slice(0, 10);
+        const toDate = new Date(options.dateRange.to).toISOString().slice(0, 10);
+        filename += `-${fromDate}-to-${toDate}`;
+    } else if (options.dateRange?.from) {
+        const fromDate = new Date(options.dateRange.from).toISOString().slice(0, 10);
+        filename += `-from-${fromDate}`;
+    } else if (options.dateRange?.to) {
+        const toDate = new Date(options.dateRange.to).toISOString().slice(0, 10);
+        filename += `-until-${toDate}`;
+    }
+    
+    // Add count info if provided
+    if (options.filteredCount !== undefined && options.totalCount !== undefined) {
+        filename += `-${options.filteredCount}of${options.totalCount}`;
+    }
+    
+    filename += `-${timestamp}.csv`;
+    
+    return filename;
+};
+
+export const downloadTicketsCSV = (tickets: TicketExportData[], options: TicketExportOptions = {}) => {
+    const csvContent = generateTicketsCSV(tickets);
+    const filename = options.filename || generateTicketFilename(options);
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');

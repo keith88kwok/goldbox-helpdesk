@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { type SelectedWorkspace } from '@/lib/server/ticket-utils';
 import { type SelectedKiosk } from '@/lib/server/kiosk-utils';
 import { KioskSelector } from '@/components/kiosks/kiosk-selector';
+import { useAuth } from '@/contexts/auth-context';
 
 const client = generateClient<Schema>();
 
@@ -38,6 +39,7 @@ export default function NewTicketClient({
 }: NewTicketClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
@@ -119,6 +121,12 @@ export default function NewTicketClient({
         
         if (!validateForm()) return;
 
+        // Check if user is authenticated
+        if (!user?.id) {
+            setError('User not authenticated. Please log in again.');
+            return;
+        }
+
         setIsSubmitting(true);
         setError(null);
 
@@ -139,7 +147,7 @@ export default function NewTicketClient({
                 ticketId,
                 workspaceId,
                 kioskId: formData.kioskId,
-                reporterId: 'temp-user-id', // TODO: Get actual user ID from auth context
+                reporterId: user.id, // Use actual authenticated user ID
                 assigneeId: formData.assigneeId || null,
                 title: formData.title.trim(),
                 description: formData.description.trim(),
