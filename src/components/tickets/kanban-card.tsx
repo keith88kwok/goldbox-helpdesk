@@ -103,10 +103,10 @@ export default function KanbanCard({
                             </span>
                         </div>
                         
-                        {ticket.assigneeId && (
+                        {ticket.assigneeName && (
                             <div className="flex items-center gap-1">
                                 <User className="h-3 w-3 flex-shrink-0" />
-                                <span>Assigned</span>
+                                <span>{ticket.assigneeName}</span>
                             </div>
                         )}
 

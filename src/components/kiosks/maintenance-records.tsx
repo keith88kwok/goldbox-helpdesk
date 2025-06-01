@@ -230,10 +230,10 @@ export default function MaintenanceRecords({
                                                 </div>
                                             )}
                                             
-                                            {record.assigneeId && (
+                                            {record.assigneeName && (
                                                 <div className="flex items-center gap-1">
                                                     <User className="h-3 w-3" />
-                                                    Assigned
+                                                    {record.assigneeName}
                                                 </div>
                                             )}
                                         </div>

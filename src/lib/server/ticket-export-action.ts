@@ -55,7 +55,7 @@ export async function exportTicketsAction(
         });
 
         if (errors) {
-            throw new Error(`Failed to fetch tickets: ${errors.map((e: any) => e.message).join(', ')}`);
+            throw new Error(`Failed to fetch tickets: ${errors.map((e: { message: string }) => e.message).join(', ')}`);
         }
 
         let filteredTickets = tickets || [];
@@ -94,12 +94,12 @@ export async function exportTicketsAction(
             );
         }
 
-        // Get unique IDs for related data
-        const kioskIds = [...new Set(filteredTickets.map((t: TicketType) => t.kioskId))];
-        const userIds = [...new Set([
-            ...filteredTickets.map((t: TicketType) => t.reporterId),
-            ...filteredTickets.map((t: TicketType) => t.assigneeId).filter(Boolean)
-        ])];
+        // Get unique IDs for related data (not used directly but needed for lookups)
+        // const kioskIds = [...new Set(filteredTickets.map((t: TicketType) => t.kioskId))];
+        // const userIds = [...new Set([
+        //     ...filteredTickets.map((t: TicketType) => t.reporterId),
+        //     ...filteredTickets.map((t: TicketType) => t.assigneeId).filter(Boolean)
+        // ])];
 
         // Fetch all kiosks for the workspace (simpler approach)
         const { data: allKiosks } = await cookiesClient.models.Kiosk.list({

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getTicketWithAccess } from '@/lib/server/ticket-utils';
+import { getTicketWithAccess, getWorkspaceUsers } from '@/lib/server/ticket-utils';
 import { getTicketComments, validateCommentAccess } from '@/lib/server/comment-utils';
 import { getTicketAttachments } from '@/lib/server/attachment-utils';
 import { getWorkspaceKiosks, getKioskById } from '@/lib/server/kiosk-utils';
@@ -21,13 +21,14 @@ export default async function TicketDetailPage({ params }: PageProps) {
         // Fetch ticket data server-side with access validation
         const { ticket, workspace, userRole } = await getTicketWithAccess(id, ticketId);
 
-        // Fetch comment data, attachments, kiosk data, and user access info
-        const [comments, commentAccess, attachments, currentKiosk, workspaceKiosksResult] = await Promise.all([
+        // Fetch comment data, attachments, kiosk data, workspace users, and user access info
+        const [comments, commentAccess, attachments, currentKiosk, workspaceKiosksResult, workspaceUsers] = await Promise.all([
             getTicketComments(id, ticketId),
             validateCommentAccess(id),
             getTicketAttachments(ticket.id),
             getKioskById(id, ticket.kioskId),
-            getWorkspaceKiosks(id)
+            getWorkspaceKiosks(id),
+            getWorkspaceUsers(id)
         ]);
 
         return (
@@ -41,6 +42,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
                 userId={commentAccess.userId}
                 currentKiosk={currentKiosk}
                 workspaceKiosks={workspaceKiosksResult.kiosks}
+                workspaceUsers={workspaceUsers}
             />
         );
     } catch (error) {

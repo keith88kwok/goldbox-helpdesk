@@ -4,20 +4,17 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
-    Plus, 
-    Search, 
-    AlertCircle, 
-    Calendar, 
-    User, 
-    ArrowLeft,
-    Grid3X3,
+    Plus,
+    Calendar,
     List,
+    AlertCircle,
     Columns3,
     CalendarDays,
     Edit,
     Eye,
-    Filter,
-    X
+    X,
+    ArrowLeft,
+    Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -224,7 +221,7 @@ export default function TicketsClient({
                     }
                 `}
             >
-                <Grid3X3 className="h-4 w-4" />
+                <Columns3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Cards</span>
             </button>
         </div>
@@ -305,7 +302,7 @@ export default function TicketsClient({
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="text-sm text-gray-900">
-                                        {ticket.assigneeId ? 'Assigned' : 'Unassigned'}
+                                        {ticket.assigneeName || 'Unassigned'}
                                     </div>
                                 </td>
                                 {canEditTickets && (
@@ -380,7 +377,7 @@ export default function TicketsClient({
                                     </span>
                                 )}
                             </div>
-                            <span>{ticket.assigneeId ? 'Assigned' : 'Unassigned'}</span>
+                            <span>{ticket.assigneeName || 'Unassigned'}</span>
                         </div>
                         
                         {canEditTickets && (
@@ -464,10 +461,10 @@ export default function TicketsClient({
                                 <span className="truncate">Reported: {formatDate(ticket.reportedDate)}</span>
                             </div>
 
-                            {ticket.assigneeId && (
+                            {ticket.assigneeName && (
                                 <div className="flex items-center gap-2">
-                                    <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                                    <span>Assigned</span>
+                                    <Columns3 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                                    <span>{ticket.assigneeName}</span>
                                 </div>
                             )}
 
@@ -622,8 +619,6 @@ export default function TicketsClient({
                                     dateTo
                                 }}
                                 userRole={userRole}
-                                totalCount={tickets.length}
-                                filteredCount={filteredTickets.length}
                             />
 
                             <Button
@@ -657,7 +652,7 @@ export default function TicketsClient({
                     <div className="flex flex-wrap gap-2 text-xs">
                         {searchTerm && (
                             <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
-                                Search: "{searchTerm}"
+                                Search: &quot;{searchTerm}&quot;
                             </Badge>
                         )}
                         {statusFilter !== 'ALL' && (

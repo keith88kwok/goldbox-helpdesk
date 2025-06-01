@@ -15,14 +15,22 @@ import {
     ArrowLeft, 
     Edit,
     MapPin,
-    User,
     Calendar,
     Clock,
     FileText
 } from 'lucide-react';
 import { InlineMaintenanceDateEditor, AddMaintenanceDateButton } from '@/components/tickets/inline-maintenance-date-editor';
 import { InlineKioskEditor } from '@/components/kiosks/inline-kiosk-editor';
-import { updateTicketMaintenanceDateAction } from '@/lib/server/ticket-actions';
+import { InlineAssigneeEditor, AddAssigneeButton } from '@/components/tickets/inline-assignee-editor';
+import { updateTicketMaintenanceDateAction, updateTicketAssigneeAction } from '@/lib/server/ticket-actions';
+
+interface WorkspaceUser {
+    id: string;
+    userId: string;
+    name: string;
+    email: string;
+    role: string;
+}
 
 interface TicketDetailClientProps {
     ticket: SelectedTicket;
@@ -34,6 +42,7 @@ interface TicketDetailClientProps {
     initialAttachments: Attachment[];
     currentKiosk: SelectedKiosk;
     workspaceKiosks: SelectedKiosk[];
+    workspaceUsers: WorkspaceUser[];
 }
 
 // Status color mapping
@@ -53,7 +62,8 @@ export default function TicketDetailClient({
     initialComments,
     initialAttachments,
     currentKiosk,
-    workspaceKiosks
+    workspaceKiosks,
+    workspaceUsers
 }: TicketDetailClientProps) {
     const router = useRouter();
 
@@ -88,6 +98,29 @@ export default function TicketDetailClient({
             }
         } catch (error) {
             console.error('Error updating maintenance date:', error);
+            return false;
+        }
+    };
+
+    // Handle assignee updates
+    const handleAssigneeUpdate = async (newAssigneeId: string | null): Promise<boolean> => {
+        try {
+            const result = await updateTicketAssigneeAction(
+                workspaceId,
+                ticket.id,
+                newAssigneeId
+            );
+
+            if (result.success) {
+                // Refresh the page to show updated data
+                router.refresh();
+                return true;
+            } else {
+                console.error('Failed to update assignee:', result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error updating assignee:', error);
             return false;
         }
     };
@@ -242,15 +275,23 @@ export default function TicketDetailClient({
                                     />
                                 )}
 
-                                <div className="flex items-start space-x-3">
-                                    <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                    <div className="min-w-0">
-                                        <p className="text-xs sm:text-sm font-medium text-gray-900">Assignee</p>
-                                        <p className="text-xs sm:text-sm text-gray-600">
-                                            {ticket.assigneeId ? 'Assigned' : 'Unassigned'}
-                                        </p>
-                                    </div>
-                                </div>
+                                {ticket.assigneeId ? (
+                                    <InlineAssigneeEditor
+                                        ticket={ticket}
+                                        workspaceId={workspaceId}
+                                        canEdit={canEdit}
+                                        workspaceUsers={workspaceUsers}
+                                        onUpdate={handleAssigneeUpdate}
+                                    />
+                                ) : (
+                                    <AddAssigneeButton
+                                        ticket={ticket}
+                                        workspaceId={workspaceId}
+                                        canEdit={canEdit}
+                                        workspaceUsers={workspaceUsers}
+                                        onAdd={handleAssigneeUpdate}
+                                    />
+                                )}
                             </CardContent>
                         </Card>
 

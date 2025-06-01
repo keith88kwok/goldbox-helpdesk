@@ -13,6 +13,9 @@ export type MaintenanceRecord = {
     maintenanceTime: string | null;
     assigneeId: string | null;
     reporterId: string;
+    // Enhanced user information
+    reporterName: string | null;
+    assigneeName: string | null;
 };
 
 /**
@@ -46,20 +49,31 @@ export async function getKioskMaintenanceRecords(
             return [];
         }
 
+        // Fetch user data for all relevant users
+        const { data: users } = await cookiesClient.models.User.list();
+        const userMap = new Map((users || []).map(u => [u.userId, u]));
+
         // Transform and sort tickets
         const maintenanceRecords: MaintenanceRecord[] = tickets
-            .map(ticket => ({
-                id: ticket.id,
-                ticketId: ticket.ticketId,
-                title: ticket.title,
-                status: ticket.status,
-                description: ticket.description,
-                reportedDate: ticket.reportedDate,
-                updatedDate: ticket.updatedDate,
-                maintenanceTime: ticket.maintenanceTime,
-                assigneeId: ticket.assigneeId,
-                reporterId: ticket.reporterId,
-            }))
+            .map(ticket => {
+                const reporter = userMap.get(ticket.reporterId);
+                const assignee = ticket.assigneeId ? userMap.get(ticket.assigneeId) : null;
+
+                return {
+                    id: ticket.id,
+                    ticketId: ticket.ticketId,
+                    title: ticket.title,
+                    status: ticket.status,
+                    description: ticket.description,
+                    reportedDate: ticket.reportedDate,
+                    updatedDate: ticket.updatedDate,
+                    maintenanceTime: ticket.maintenanceTime,
+                    assigneeId: ticket.assigneeId,
+                    reporterId: ticket.reporterId,
+                    reporterName: reporter?.name || null,
+                    assigneeName: assignee?.name || null,
+                };
+            })
             .sort((a, b) => {
                 // Sort by most recent first (using reportedDate)
                 return new Date(b.reportedDate).getTime() - new Date(a.reportedDate).getTime();

@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { type SelectedTicket, type SelectedWorkspace } from '@/lib/server/ticket-utils';
 import { type SelectedKiosk } from '@/lib/server/kiosk-utils';
 import { KioskSelector } from '@/components/kiosks/kiosk-selector';
+import { AssigneeSelector } from '@/components/tickets/assignee-selector';
 
 const client = generateClient<Schema>();
 
@@ -218,18 +219,13 @@ export default function EditTicketClient({
 
                         {/* Assignee Selection */}
                         <FormField label="Assignee">
-                            <select
+                            <AssigneeSelector
                                 value={formData.assigneeId}
-                                onChange={(e) => handleInputChange('assigneeId', e.target.value)}
-                                className="w-full px-3 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                            >
-                                <option value="">Unassigned</option>
-                                {workspaceUsers.map((user) => (
-                                    <option key={user.id} value={user.id}>
-                                        {user.name} ({user.email}) - {user.role}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(value) => handleInputChange('assigneeId', value)}
+                                users={workspaceUsers}
+                                placeholder="Select assignee (optional)"
+                                allowClear={true}
+                            />
                             <p className="text-xs sm:text-sm text-gray-500 mt-1">Optional - leave blank for unassigned</p>
                         </FormField>
 

@@ -5,6 +5,7 @@ import { cookiesClient, type Schema } from '@/utils/amplify-utils';
 export type { SelectedWorkspace } from './workspace-utils';
 
 type TicketType = Schema['Ticket']['type'];
+type UserType = Schema['User']['type'];
 type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
 
 // Type for ticket data with only safe fields (no functions)
@@ -23,6 +24,9 @@ export type SelectedTicket = {
     reportedDate: string;
     updatedDate: string | null;
     maintenanceTime: string | null;
+    // Enhanced user information
+    reporterName: string | null;
+    assigneeName: string | null;
 };
 
 export interface TicketWithWorkspace {
@@ -32,9 +36,12 @@ export interface TicketWithWorkspace {
 }
 
 /**
- * Extract safe ticket fields for client components
+ * Extract safe ticket fields for client components with user information
  */
-function extractTicketFields(ticket: TicketType): SelectedTicket {
+function extractTicketFields(ticket: TicketType, userMap: Map<string, UserType>): SelectedTicket {
+    const reporter = userMap.get(ticket.reporterId);
+    const assignee = ticket.assigneeId ? userMap.get(ticket.assigneeId) : null;
+
     return {
         id: ticket.id,
         ticketId: ticket.ticketId,
@@ -50,6 +57,8 @@ function extractTicketFields(ticket: TicketType): SelectedTicket {
         reportedDate: ticket.reportedDate,
         updatedDate: ticket.updatedDate || null,
         maintenanceTime: ticket.maintenanceTime || null,
+        reporterName: reporter?.name || null,
+        assigneeName: assignee?.name || null,
     };
 }
 
@@ -131,8 +140,18 @@ export async function getWorkspaceTickets(workspaceId: string, options?: {
         });
     }
 
+    // Get unique user IDs from tickets
+    // const userIds = [...new Set([
+    //     ...filteredTickets.map(t => t.reporterId),
+    //     ...filteredTickets.map(t => t.assigneeId).filter(Boolean)
+    // ])];
+
+    // Fetch user data for all relevant users
+    const { data: users } = await cookiesClient.models.User.list();
+    const userMap = new Map((users || []).map(u => [u.userId, u]));
+
     return {
-        tickets: filteredTickets.map(extractTicketFields),
+        tickets: filteredTickets.map(ticket => extractTicketFields(ticket, userMap)),
         workspace: access.workspace,
         userRole: access.userRole
     };
@@ -157,8 +176,13 @@ export async function getTicketWithAccess(workspaceId: string, ticketId: string)
         throw new Error(`Ticket ${ticketId} does not belong to workspace ${workspaceId}`);
     }
 
+    // Get user data for reporter and assignee
+    // const userIds = [ticket.reporterId, ticket.assigneeId].filter(Boolean);
+    const { data: users } = await cookiesClient.models.User.list();
+    const userMap = new Map((users || []).map(u => [u.userId, u]));
+
     return {
-        ticket: extractTicketFields(ticket),
+        ticket: extractTicketFields(ticket, userMap),
         workspace: access.workspace,
         userRole: access.userRole
     };
@@ -344,8 +368,18 @@ export async function searchTickets(
         );
     }
 
+    // Get unique user IDs from tickets
+    // const userIds = [...new Set([
+    //     ...filteredTickets.map(t => t.reporterId),
+    //     ...filteredTickets.map(t => t.assigneeId).filter(Boolean)
+    // ])];
+
+    // Fetch user data for all relevant users
+    const { data: users } = await cookiesClient.models.User.list();
+    const userMap = new Map((users || []).map(u => [u.userId, u]));
+
     return {
-        tickets: filteredTickets.map(extractTicketFields),
+        tickets: filteredTickets.map(ticket => extractTicketFields(ticket, userMap)),
         workspace: access.workspace,
         userRole: access.userRole
     };
@@ -366,7 +400,11 @@ export async function getUserTickets(userId: string): Promise<SelectedTicket[]> 
         throw new Error(`Failed to fetch user tickets: ${errors.map(e => e.message).join(', ')}`);
     }
 
-    return (tickets || []).map(extractTicketFields);
+    // Get user data for tickets
+    const { data: users } = await cookiesClient.models.User.list();
+    const userMap = new Map((users || []).map(u => [u.userId, u]));
+
+    return (tickets || []).map(ticket => extractTicketFields(ticket, userMap));
 }
 
 /**

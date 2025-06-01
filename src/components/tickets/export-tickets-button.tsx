@@ -27,10 +27,8 @@ export function ExportTicketsButton({
     workspaceName,
     filters,
     userRole,
-    totalCount,
-    filteredCount,
     className = ''
-}: ExportTicketsButtonProps) {
+}: Omit<ExportTicketsButtonProps, 'totalCount' | 'filteredCount'>) {
     const [isExporting, setIsExporting] = useState(false);
 
     // Only show export button for ADMIN and MEMBER roles
