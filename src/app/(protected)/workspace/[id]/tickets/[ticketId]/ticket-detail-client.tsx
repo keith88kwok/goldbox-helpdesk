@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { type SelectedTicket, type SelectedWorkspace } from '@/lib/server/ticket-utils';
+import { type SelectedKiosk } from '@/lib/server/kiosk-utils';
 import { type TicketComment } from '@/lib/types/comment';
 import { type Attachment } from '@/lib/types/attachment';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,9 @@ import {
     Clock,
     FileText
 } from 'lucide-react';
+import { InlineMaintenanceDateEditor, AddMaintenanceDateButton } from '@/components/tickets/inline-maintenance-date-editor';
+import { InlineKioskEditor } from '@/components/kiosks/inline-kiosk-editor';
+import { updateTicketMaintenanceDateAction } from '@/lib/server/ticket-actions';
 
 interface TicketDetailClientProps {
     ticket: SelectedTicket;
@@ -28,6 +32,8 @@ interface TicketDetailClientProps {
     userId: string;
     initialComments: TicketComment[];
     initialAttachments: Attachment[];
+    currentKiosk: SelectedKiosk;
+    workspaceKiosks: SelectedKiosk[];
 }
 
 // Status color mapping
@@ -45,7 +51,9 @@ export default function TicketDetailClient({
     workspaceId,
     userId,
     initialComments,
-    initialAttachments
+    initialAttachments,
+    currentKiosk,
+    workspaceKiosks
 }: TicketDetailClientProps) {
     const router = useRouter();
 
@@ -60,6 +68,37 @@ export default function TicketDetailClient({
     };
 
     const canEdit = userRole === 'ADMIN' || userRole === 'MEMBER';
+
+    // Handle maintenance date updates
+    const handleMaintenanceDateUpdate = async (newDate: string | null): Promise<boolean> => {
+        try {
+            const result = await updateTicketMaintenanceDateAction(
+                workspaceId,
+                ticket.id,
+                newDate
+            );
+
+            if (result.success) {
+                // Refresh the page to show updated data
+                router.refresh();
+                return true;
+            } else {
+                console.error('Failed to update maintenance date:', result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error updating maintenance date:', error);
+            return false;
+        }
+    };
+
+    // Handle kiosk updates
+    const handleKioskUpdate = (success: boolean) => {
+        if (success) {
+            // Refresh the page to show updated data
+            router.refresh();
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -187,16 +226,20 @@ export default function TicketDetailClient({
                                     </div>
                                 )}
 
-                                {ticket.maintenanceTime && (
-                                    <div className="flex items-start space-x-3">
-                                        <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div className="min-w-0">
-                                            <p className="text-xs sm:text-sm font-medium text-gray-900">Scheduled Maintenance</p>
-                                            <p className="text-xs sm:text-sm text-gray-600 break-words">
-                                                {formatDate(ticket.maintenanceTime)}
-                                            </p>
-                                        </div>
-                                    </div>
+                                {ticket.maintenanceTime ? (
+                                    <InlineMaintenanceDateEditor
+                                        ticket={ticket}
+                                        workspaceId={workspaceId}
+                                        canEdit={canEdit}
+                                        onUpdate={handleMaintenanceDateUpdate}
+                                    />
+                                ) : (
+                                    <AddMaintenanceDateButton
+                                        ticket={ticket}
+                                        workspaceId={workspaceId}
+                                        canEdit={canEdit}
+                                        onAdd={handleMaintenanceDateUpdate}
+                                    />
                                 )}
 
                                 <div className="flex items-start space-x-3">
@@ -217,23 +260,14 @@ export default function TicketDetailClient({
                                 <CardTitle className="text-base sm:text-lg">Related Kiosk</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex items-start space-x-3">
-                                    <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-xs sm:text-sm font-medium text-gray-900">Kiosk Location</p>
-                                        <p className="text-xs sm:text-sm text-gray-600 break-all">
-                                            Kiosk ID: {ticket.kioskId}
-                                        </p>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="mt-2 w-full sm:w-auto min-h-[44px]"
-                                            onClick={() => router.push(`/workspace/${workspaceId}/kiosks/${ticket.kioskId}`)}
-                                        >
-                                            View Kiosk Details
-                                        </Button>
-                                    </div>
-                                </div>
+                                <InlineKioskEditor
+                                    ticket={ticket}
+                                    currentKiosk={currentKiosk}
+                                    workspaceKiosks={workspaceKiosks}
+                                    workspaceId={workspaceId}
+                                    canEdit={canEdit}
+                                    onUpdate={handleKioskUpdate}
+                                />
                             </CardContent>
                         </Card>
 

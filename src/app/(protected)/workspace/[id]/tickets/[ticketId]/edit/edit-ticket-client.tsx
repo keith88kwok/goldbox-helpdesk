@@ -13,6 +13,7 @@ import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { type SelectedTicket, type SelectedWorkspace } from '@/lib/server/ticket-utils';
 import { type SelectedKiosk } from '@/lib/server/kiosk-utils';
+import { KioskSelector } from '@/components/kiosks/kiosk-selector';
 
 const client = generateClient<Schema>();
 
@@ -59,6 +60,31 @@ export default function EditTicketClient({
         if (success) setSuccess(false); // Clear success message when user makes changes
     };
 
+    // Helper function to validate and sanitize datetime input
+    const sanitizeMaintenanceTime = (value: string): string | null => {
+        // If empty or only whitespace, return null
+        if (!value || value.trim() === '') {
+            return null;
+        }
+
+        // Validate datetime-local format (YYYY-MM-DDTHH:MM)
+        const datetimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+        if (!datetimeRegex.test(value)) {
+            throw new Error('Invalid maintenance time format. Please use the date picker.');
+        }
+
+        try {
+            // Convert to ISO string to ensure it's a valid date
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+                throw new Error('Invalid maintenance time. Please select a valid date and time.');
+            }
+            return date.toISOString();
+        } catch {
+            throw new Error('Invalid maintenance time. Please select a valid date and time.');
+        }
+    };
+
     const validateForm = () => {
         if (!formData.kioskId) {
             setError('Please select a kiosk');
@@ -72,6 +98,17 @@ export default function EditTicketClient({
             setError('Description is required');
             return false;
         }
+
+        // Validate maintenance time if provided
+        if (formData.maintenanceTime && formData.maintenanceTime.trim() !== '') {
+            try {
+                sanitizeMaintenanceTime(formData.maintenanceTime);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Invalid maintenance time');
+                return false;
+            }
+        }
+
         return true;
     };
 
@@ -85,6 +122,14 @@ export default function EditTicketClient({
         setSuccess(false);
 
         try {
+            // Sanitize maintenance time before sending to Amplify
+            let sanitizedMaintenanceTime: string | null = null;
+            try {
+                sanitizedMaintenanceTime = sanitizeMaintenanceTime(formData.maintenanceTime);
+            } catch (err) {
+                throw new Error(err instanceof Error ? err.message : 'Invalid maintenance time');
+            }
+
             // Update the ticket using Amplify client
             const { data: updatedTicket, errors } = await client.models.Ticket.update({
                 id: ticket.id,
@@ -93,7 +138,7 @@ export default function EditTicketClient({
                 title: formData.title.trim(),
                 description: formData.description.trim(),
                 status: formData.status as "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED",
-                maintenanceTime: formData.maintenanceTime || null,
+                maintenanceTime: sanitizedMaintenanceTime,
                 updatedDate: new Date().toISOString(),
             });
 
@@ -164,19 +209,11 @@ export default function EditTicketClient({
 
                         {/* Kiosk Selection */}
                         <FormField label="Kiosk" required>
-                            <select
+                            <KioskSelector
                                 value={formData.kioskId}
-                                onChange={(e) => handleInputChange('kioskId', e.target.value)}
-                                className="w-full px-3 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                required
-                            >
-                                <option value="">Select a kiosk</option>
-                                {kiosks.map((kiosk) => (
-                                    <option key={kiosk.id} value={kiosk.id}>
-                                        {kiosk.address} - {kiosk.status}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(value) => handleInputChange('kioskId', value)}
+                                kiosks={kiosks}
+                            />
                         </FormField>
 
                         {/* Assignee Selection */}

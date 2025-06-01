@@ -98,6 +98,28 @@ export async function getKioskWithAccess(workspaceId: string, kioskId: string): 
 }
 
 /**
+ * Get specific kiosk by ID (for use in components that already have access)
+ */
+export async function getKioskById(workspaceId: string, kioskId: string): Promise<SelectedKiosk> {
+    // Validate access to workspace
+    await validateWorkspaceAccess(workspaceId, 'VIEWER');
+
+    // Get the specific kiosk
+    const { data: kiosk, errors } = await cookiesClient.models.Kiosk.get({ id: kioskId });
+
+    if (errors || !kiosk) {
+        throw new Error(`Kiosk not found: ${kioskId}`);
+    }
+
+    // Verify kiosk belongs to the workspace
+    if (kiosk.workspaceId !== workspaceId) {
+        throw new Error(`Kiosk ${kioskId} does not belong to workspace ${workspaceId}`);
+    }
+
+    return extractKioskFields(kiosk);
+}
+
+/**
  * Create a new kiosk (requires MEMBER or ADMIN role)
  */
 export async function createKiosk(

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getTicketWithAccess } from '@/lib/server/ticket-utils';
 import { getTicketComments, validateCommentAccess } from '@/lib/server/comment-utils';
 import { getTicketAttachments } from '@/lib/server/attachment-utils';
+import { getWorkspaceKiosks, getKioskById } from '@/lib/server/kiosk-utils';
 import TicketDetailClient from './ticket-detail-client';
 
 interface PageProps {
@@ -20,11 +21,13 @@ export default async function TicketDetailPage({ params }: PageProps) {
         // Fetch ticket data server-side with access validation
         const { ticket, workspace, userRole } = await getTicketWithAccess(id, ticketId);
 
-        // Fetch comment data, attachments, and user access info
-        const [comments, commentAccess, attachments] = await Promise.all([
+        // Fetch comment data, attachments, kiosk data, and user access info
+        const [comments, commentAccess, attachments, currentKiosk, workspaceKiosksResult] = await Promise.all([
             getTicketComments(id, ticketId),
             validateCommentAccess(id),
-            getTicketAttachments(ticket.id)
+            getTicketAttachments(ticket.id),
+            getKioskById(id, ticket.kioskId),
+            getWorkspaceKiosks(id)
         ]);
 
         return (
@@ -36,6 +39,8 @@ export default async function TicketDetailPage({ params }: PageProps) {
                 initialComments={comments}
                 initialAttachments={attachments}
                 userId={commentAccess.userId}
+                currentKiosk={currentKiosk}
+                workspaceKiosks={workspaceKiosksResult.kiosks}
             />
         );
     } catch (error) {

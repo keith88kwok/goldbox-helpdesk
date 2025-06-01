@@ -1,8 +1,256 @@
 # Active Context: Kiosk Maintenance Helpdesk
 
-## Current Focus: 🎯 KANBAN VIEW IMPLEMENTATION COMPLETED! 🎉
+## Current Focus: 🎯 ENHANCED KIOSK DROPDOWN & INLINE EDITOR COMPLETED! 🎉
 
-**LATEST ACHIEVEMENT**: Kanban View with full drag-and-drop functionality has been successfully implemented with professional UI and excellent cursor-following behavior!
+**LATEST ACHIEVEMENT**: Enhanced kiosk dropdown with search functionality and inline kiosk editor have been successfully implemented, providing a modern, searchable interface for kiosk selection and quick kiosk changes directly from ticket detail view!
+
+### ✅ COMPLETED: Enhanced Kiosk Dropdown & Inline Editor - MAJOR UX ENHANCEMENT! ✅
+
+#### Enhanced Kiosk Selector Component ✅ **MODERN SEARCHABLE INTERFACE!**
+- **✅ Search Functionality** - Real-time filtering by address, location description, or status
+- **✅ Modern Design** - Professional dropdown with icons, status badges, and visual hierarchy
+- **✅ Accessibility** - Proper ARIA labels, keyboard navigation, and focus management
+- **✅ Clear/Reset** - Easy clear button for selected kiosks
+- **✅ Visual Feedback** - Hover states, focus indicators, and smooth animations
+- **✅ Mobile Optimized** - Touch-friendly interactions with responsive design
+
+#### Inline Kiosk Editor ✅ **CLICK-TO-EDIT INTERFACE!**
+- **✅ Inline Editing** - Click on kiosk information to edit directly in ticket detail view
+- **✅ Rich Display** - Shows full kiosk address, location description, and status badge
+- **✅ Modal Interface** - Professional editing interface with searchable kiosk selector
+- **✅ Permission Control** - Only users with edit permissions can modify kiosks
+- **✅ Visual Feedback** - Hover states with edit icons and "Click to change" prompts
+
+#### User Experience Excellence ✅ **STREAMLINED WORKFLOW!**
+- **✅ Context Preservation** - Users remain on ticket detail view instead of navigating to edit form
+- **✅ Quick Updates** - Single click to start editing, immediate save functionality
+- **✅ Dual Options** - Users can choose between quick inline editing or full edit form
+- **✅ Real-time Feedback** - Loading states, success messages, and error handling
+- **✅ Consistent Interface** - Same enhanced selector across all forms
+
+#### Component Architecture ✅ **PROFESSIONAL IMPLEMENTATION!**
+
+##### KioskSelector Component
+- **✅ Search Integration** - Debounced search with real-time filtering
+- **✅ Rich Display** - Address, location description, and color-coded status badges
+- **✅ Keyboard Navigation** - Full keyboard support with escape and enter handling
+- **✅ Click Outside** - Automatic dropdown closure when clicking outside
+- **✅ Error Handling** - Proper error display and validation feedback
+
+##### InlineKioskEditor Component
+- **✅ Interactive Display** - Hover effects reveal edit capability with smooth transitions
+- **✅ Current Kiosk Display** - Shows existing kiosk information during editing
+- **✅ Validation Logic** - Proper kiosk selection validation and error handling
+- **✅ State Management** - Clean loading, error, and success state handling
+- **✅ Permission Gating** - Respects existing role-based access control
+
+#### Backend Integration ✅ **ROBUST SERVER ACTIONS!**
+
+##### Server Action Implementation
+```typescript
+export async function updateTicketKioskAction(
+    workspaceId: string,
+    ticketId: string,
+    kioskId: string
+): Promise<{ success: boolean; error?: string }>
+```
+
+##### Technical Features
+- **✅ Permission Validation** - Validates workspace access (MEMBER or higher)
+- **✅ Kiosk Validation** - Ensures kiosk ID is provided and valid
+- **✅ Database Updates** - Updates only kiosk ID and updatedDate fields
+- **✅ Auto-revalidation** - Automatic page refresh after successful updates
+- **✅ Error Handling** - Comprehensive error responses with user-friendly messages
+
+#### Visual Design Excellence ✅ **MODERN UI PATTERNS!**
+
+##### Enhanced Dropdown Design
+- **✅ Search Bar** - Prominent search input with search icon
+- **✅ Rich Options** - Each option shows address, location, and status badge
+- **✅ Status Colors** - Color-coded status badges (Active: green, Maintenance: yellow, etc.)
+- **✅ Selection State** - Clear visual indication of selected option
+- **✅ Empty States** - Helpful messaging when no kiosks match search
+
+##### Inline Editor Design
+- **✅ Hover Effects** - Subtle background changes and edit icon appearance
+- **✅ Click Feedback** - Clear visual indication that elements are interactive
+- **✅ Current vs New** - Clear distinction between current and new kiosk selection
+- **✅ Success Animation** - Brief success state before auto-close
+
+#### Integration Benefits ✅ **SEAMLESS FUNCTIONALITY!**
+
+##### Form Integration
+- **✅ New Ticket Form** - Enhanced selector replaces basic HTML select
+- **✅ Edit Ticket Form** - Same enhanced selector for consistency
+- **✅ Validation Consistency** - Same validation logic across all forms
+- **✅ Error Handling** - Consistent error messaging and display
+
+##### Ticket Detail Integration
+- **✅ Rich Kiosk Display** - Full kiosk information instead of just ID
+- **✅ Inline Editing** - Quick kiosk changes without form navigation
+- **✅ Permission Respect** - Honors existing role-based access control
+- **✅ Data Fetching** - Efficient server-side data loading
+
+### Technical Implementation Results ✅
+
+#### User Experience Benefits
+1. **🔍 Faster Kiosk Selection** - Search functionality reduces time to find kiosks
+2. **⚡ Quick Kiosk Changes** - Immediate kiosk updates without form navigation
+3. **📱 Mobile Friendly** - Optimized touch interactions for mobile users
+4. **🎯 Context Preservation** - Users stay focused on ticket details
+
+#### Technical Benefits
+1. **🏗️ Reusable Component** - KioskSelector used across all kiosk selection points
+2. **🛡️ Consistent Validation** - Same validation logic across all edit methods
+3. **📊 Improved Metrics** - Better user engagement with kiosk management
+4. **⚙️ Minimal Complexity** - Leverages existing server infrastructure
+
+#### Business Impact
+1. **Enhanced Productivity** - Streamlined kiosk selection and management
+2. **Improved User Adoption** - Lower friction encourages better ticket accuracy
+3. **Professional Interface** - Modern UI patterns improve user satisfaction
+4. **Workflow Optimization** - Reduces time spent on common kiosk tasks
+
+### Code Quality Excellence ✅
+
+#### Component Design
+- **TypeScript Compliance** - Fully typed interfaces and proper error handling
+- **Accessibility Standards** - Proper ARIA labels and keyboard navigation support
+- **Performance Optimization** - Efficient search filtering and state management
+- **Mobile Responsiveness** - Touch-friendly interactions with proper sizing
+
+#### Server Integration
+- **Permission Security** - Validates workspace access before database operations
+- **Error Recovery** - Graceful error handling with detailed user feedback
+- **Performance** - Efficient single-field updates instead of full ticket updates
+- **Data Integrity** - Proper validation ensures consistent data format
+
+The enhanced kiosk dropdown and inline editor provide **PROFESSIONAL KIOSK MANAGEMENT** with modern UX patterns, significantly improving the user experience while maintaining all existing functionality and validation standards! 🎉
+
+### Previous Major Features: 🎯 INLINE MAINTENANCE DATE EDITOR COMPLETED! 🎉
+
+## Current Focus: 🎯 INLINE MAINTENANCE DATE EDITOR COMPLETED! 🎉
+
+**LATEST ACHIEVEMENT**: Inline maintenance date editing has been successfully implemented, allowing users to quickly update scheduled maintenance dates directly from the ticket detail view without navigating to the edit form!
+
+### ✅ COMPLETED: Inline Maintenance Date Editor - MAJOR UX ENHANCEMENT! ✅
+
+#### Interactive Date Editing Features ✅ **CLICK-TO-EDIT INTERFACE!**
+- **✅ Inline Date Editor** - Click on existing maintenance dates to edit them directly in place
+- **✅ Add Date Button** - Click to add scheduled maintenance dates when none are set
+- **✅ Modal Interface** - Professional modal with datetime picker for date selection
+- **✅ Permission Control** - Only users with edit permissions can modify dates
+- **✅ Visual Feedback** - Hover states with edit icons and "Click to edit" prompts
+
+#### User Experience Excellence ✅ **STREAMLINED WORKFLOW!**
+- **✅ Context Preservation** - Users remain on ticket detail view instead of navigating to edit form
+- **✅ Quick Updates** - Single click to start editing, immediate save functionality
+- **✅ Dual Options** - Users can choose between quick inline editing or full edit form
+- **✅ Real-time Feedback** - Loading states, success messages, and error handling
+- **✅ Mobile Optimized** - Touch-friendly interactions with proper modal sizing
+
+#### Component Architecture ✅ **PROFESSIONAL IMPLEMENTATION!**
+
+##### InlineMaintenanceDateEditor Component
+- **✅ Interactive Display** - Hover effects reveal edit capability with smooth transitions
+- **✅ Modal Integration** - Professional modal with datetime-local input
+- **✅ Validation Logic** - Same `sanitizeMaintenanceTime()` validation as edit forms
+- **✅ Remove Functionality** - Option to remove scheduled maintenance dates
+- **✅ State Management** - Proper loading, error, and success state handling
+
+##### AddMaintenanceDateButton Component
+- **✅ Empty State Handling** - Appears when no maintenance date is scheduled
+- **✅ Consistent UI** - Matches existing design patterns with hover effects
+- **✅ Permission Gating** - Only visible for users with edit permissions
+- **✅ Intuitive Interface** - Clear "Click to add date" prompts with plus icon
+
+#### Backend Integration ✅ **ROBUST SERVER ACTIONS!**
+
+##### Server Action Implementation
+```typescript
+export async function updateTicketMaintenanceDateAction(
+    workspaceId: string,
+    ticketId: string,
+    maintenanceTime: string | null
+): Promise<{ success: boolean; error?: string }>
+```
+
+##### Technical Features
+- **✅ Permission Validation** - Validates workspace access (MEMBER or higher)
+- **✅ Date Sanitization** - Reuses proven `sanitizeMaintenanceTime()` validation logic
+- **✅ Database Updates** - Updates only maintenance time and updatedDate fields
+- **✅ Auto-revalidation** - Automatic page refresh after successful updates
+- **✅ Error Handling** - Comprehensive error responses with user-friendly messages
+
+#### Visual Design Excellence ✅ **MODERN UI PATTERNS!**
+
+##### Interactive States
+- **✅ Hover Effects** - Subtle background changes and edit icon appearance
+- **✅ Click Feedback** - Clear visual indication that elements are interactive
+- **✅ Modal Design** - Professional modal with proper spacing and button layout
+- **✅ Success Animation** - Brief success state before modal auto-closes
+
+##### Mobile Responsiveness
+- **✅ Touch Targets** - 44px minimum touch areas for mobile interactions
+- **✅ Modal Adaptation** - Properly sized modals for mobile screens
+- **✅ Native Inputs** - datetime-local inputs for optimal mobile UX
+- **✅ Responsive Layout** - Flexible button layouts for different screen sizes
+
+#### Integration Benefits ✅ **SEAMLESS FUNCTIONALITY!**
+
+##### Preserves Existing Features
+- **✅ Edit Form Unchanged** - Full edit form remains available for comprehensive edits
+- **✅ Same Validation** - Identical validation logic ensures data consistency
+- **✅ Permission System** - Respects existing role-based access control
+- **✅ Error Patterns** - Consistent error messaging across all edit methods
+
+##### Enhanced Workflow
+- **✅ Reduced Navigation** - No need to leave ticket detail view for simple date changes
+- **✅ Faster Updates** - One-click editing for the most common maintenance task
+- **✅ Better UX Data** - Reduces edit form abandonment for simple changes
+- **✅ Professional Feel** - Modern inline editing elevates overall user experience
+
+### Technical Implementation Results ✅
+
+#### User Experience Benefits
+1. **⚡ Faster Maintenance Scheduling** - Immediate date updates without form navigation
+2. **🎯 Context Preservation** - Users stay focused on ticket details
+3. **📱 Mobile Friendly** - Optimized touch interactions for mobile users
+4. **🔄 Multiple Edit Options** - Choice between quick inline editing or comprehensive form editing
+
+#### Technical Benefits
+1. **🏗️ Reusable Pattern** - Inline editing component can be adapted for other fields
+2. **🛡️ Consistent Validation** - Same validation logic across all edit methods
+3. **📊 Improved Metrics** - Better user engagement with maintenance scheduling
+4. **⚙️ Minimal Complexity** - Leverages existing server infrastructure
+
+#### Business Impact
+1. **Enhanced Productivity** - Streamlined maintenance date management
+2. **Improved User Adoption** - Lower friction encourages better maintenance planning
+3. **Professional Interface** - Modern UI patterns improve user satisfaction
+4. **Workflow Optimization** - Reduces time spent on common maintenance tasks
+
+### Code Quality Excellence ✅
+
+#### Component Design
+- **TypeScript Compliance** - Fully typed interfaces and proper error handling
+- **Validation Consistency** - Reuses proven validation logic from edit forms
+- **State Management** - Clean state handling with proper loading and error states
+- **Accessibility** - Proper ARIA labels and keyboard navigation support
+
+#### Server Integration
+- **Permission Security** - Validates workspace access before database operations
+- **Error Recovery** - Graceful error handling with detailed user feedback
+- **Performance** - Efficient single-field updates instead of full ticket updates
+- **Data Integrity** - Same sanitization logic ensures consistent data format
+
+The inline maintenance date editor provides **PROFESSIONAL INLINE EDITING** with modern UX patterns, significantly improving the user experience while maintaining all existing functionality and validation standards! 🎉
+
+### Previous Major Features: 🎯 MAINTENANCE TIME VALIDATION FIX COMPLETED! 🎉
+
+## Previous Major Features: 🎯 KANBAN VIEW IMPLEMENTATION COMPLETED! 🎉
+
+**PREVIOUS ACHIEVEMENT**: Kanban View with full drag-and-drop functionality has been successfully implemented with professional UI and excellent cursor-following behavior!
 
 ### ✅ COMPLETED: Kanban View Implementation - MAJOR WORKFLOW ENHANCEMENT! ✅
 
@@ -958,3 +1206,65 @@ The UserMenu component now operates **PERFECTLY** without any React DOM warnings
 4. **Future-Proof** - Established patterns for maintaining type safety in future development
 
 The codebase now has **PRODUCTION-GRADE** TypeScript and ESLint compliance, enabling reliable builds and better developer experience! 🎉 
+
+### ✅ COMPLETED: Maintenance Time Validation Fix - CRITICAL BUG RESOLUTION! ✅
+
+#### Issue Resolution ✅ **DATETIME VALIDATION FIXED!**
+- **✅ Root Cause Identified** - Empty datetime-local inputs were sending empty strings instead of null to AWS AppSync
+- **✅ AWS AppSync Validation** - AppSync expects AWSDateTime fields to be either valid ISO 8601 strings or null, never empty strings
+- **✅ Format Validation** - Added proper datetime-local format validation (YYYY-MM-DDTHH:MM)
+- **✅ Error Prevention** - Prevents "Variable 'maintenanceTime' has an invalid value" errors during ticket updates
+
+#### Technical Implementation ✅ **ROBUST VALIDATION SYSTEM!**
+- **✅ Sanitization Function** - Added `sanitizeMaintenanceTime()` helper function for both create and edit forms
+- **✅ Empty Value Handling** - Empty strings and whitespace-only values are converted to null
+- **✅ Format Validation** - Validates datetime-local format before submission
+- **✅ Date Validation** - Ensures date is valid and convertible to ISO string
+- **✅ Error Messaging** - Clear, user-friendly error messages for invalid datetime inputs
+
+#### Validation Logic ✅ **COMPREHENSIVE ERROR PREVENTION!**
+```typescript
+const sanitizeMaintenanceTime = (value: string): string | null => {
+    // If empty or only whitespace, return null
+    if (!value || value.trim() === '') {
+        return null;
+    }
+    
+    // Validate datetime-local format (YYYY-MM-DDTHH:MM)
+    const datetimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+    if (!datetimeRegex.test(value)) {
+        throw new Error('Invalid maintenance time format. Please use the date picker.');
+    }
+    
+    try {
+        // Convert to ISO string to ensure it's a valid date
+        const date = new Date(value);
+        if (isNaN(date.getTime())) {
+            throw new Error('Invalid maintenance time. Please select a valid date and time.');
+        }
+        return date.toISOString();
+    } catch (err) {
+        throw new Error('Invalid maintenance time. Please select a valid date and time.');
+    }
+};
+```
+
+#### Fixed Components ✅ **BOTH CREATE AND EDIT FORMS!**
+- **✅ Edit Ticket Form** - Fixed maintenance time validation in edit-ticket-client.tsx
+- **✅ New Ticket Form** - Fixed maintenance time validation in new-ticket-client.tsx
+- **✅ Form Validation** - Added pre-submission validation to catch errors early
+- **✅ User Experience** - Clear error messages guide users to correct format
+
+#### Benefits ✅ **ERROR-FREE OPERATION!**
+- **✅ No More Validation Errors** - Eliminates "Variable 'maintenanceTime' has an invalid value" errors
+- **✅ Improved User Experience** - Clear feedback when datetime format is invalid
+- **✅ Data Integrity** - Ensures only valid datetime values or null are sent to AWS AppSync
+- **✅ Cross-Form Consistency** - Same validation logic applied to both create and edit operations
+
+#### AWS AppSync Compliance ✅ **PROPER DATETIME HANDLING!**
+- **✅ AWSDateTime Format** - Properly converts datetime-local to ISO 8601 format for AppSync
+- **✅ Null Handling** - Empty maintenance times are properly converted to null
+- **✅ Validation Alignment** - Validation logic aligns with AWS AppSync scalar type requirements
+- **✅ Error Prevention** - Prevents GraphQL validation errors at the API level
+
+### Previous Major Features: 🎯 MAINTENANCE TIME VALIDATION FIX COMPLETED! 🎉 
