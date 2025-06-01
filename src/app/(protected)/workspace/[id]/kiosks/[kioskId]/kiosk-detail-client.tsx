@@ -4,10 +4,12 @@ import { useRouter } from 'next/navigation';
 import { type SelectedKiosk } from '@/lib/server/kiosk-utils';
 import { type SelectedWorkspace } from '@/lib/server/workspace-utils';
 import { type Attachment } from '@/lib/types/attachment';
+import { type MaintenanceRecord } from '@/lib/server/kiosk-maintenance-utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { KioskAttachmentManager } from '@/components/kiosks/kiosk-attachment-manager';
+import MaintenanceRecords from '@/components/kiosks/maintenance-records';
 import { 
     Building2, 
     ArrowLeft, 
@@ -26,9 +28,17 @@ interface KioskDetailClientProps {
     userRole: 'ADMIN' | 'MEMBER' | 'VIEWER';
     workspaceId: string;
     initialAttachments?: Attachment[];
+    maintenanceRecords: MaintenanceRecord[];
 }
 
-export default function KioskDetailClient({ kiosk, workspace, userRole, workspaceId, initialAttachments }: KioskDetailClientProps) {
+export default function KioskDetailClient({ 
+    kiosk, 
+    workspace, 
+    userRole, 
+    workspaceId, 
+    initialAttachments, 
+    maintenanceRecords 
+}: KioskDetailClientProps) {
     const router = useRouter();
 
     // Status badge colors
@@ -115,125 +125,200 @@ export default function KioskDetailClient({ kiosk, workspace, userRole, workspac
                         </CardHeader>
                     </Card>
 
-                    {/* Details Grid */}
+                    {/* Details Grid - Redesigned for Better Alignment */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                        {/* Basic Information */}
-                        <Card>
-                            <CardHeader className="pb-3">
+                        {/* Left Column - Combined Basic & Additional Information */}
+                        <Card className="flex flex-col h-full">
+                            <CardHeader className="pb-3 flex-shrink-0">
                                 <CardTitle className="flex items-center text-base sm:text-lg">
                                     <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                                    Basic Information
+                                    Kiosk Information
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-3 sm:space-y-4">
-                                <div>
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Kiosk ID</label>
-                                    <p className="text-sm text-gray-600 font-mono break-all">{kiosk.kioskId}</p>
+                            <CardContent className="flex-1 space-y-4 sm:space-y-5">
+                                {/* Basic Information Section */}
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">Kiosk ID</label>
+                                        <p className="text-sm text-gray-600 font-mono break-all bg-gray-50 px-2 py-1 rounded">
+                                            {kiosk.kioskId}
+                                        </p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">Address</label>
+                                        <p className="text-sm text-gray-900 break-words">
+                                            {kiosk.address || 'Not provided'}
+                                        </p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">Location Description</label>
+                                        <p className="text-sm text-gray-900 break-words">
+                                            {kiosk.locationDescription || 'Not provided'}
+                                        </p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">Status</label>
+                                        <div className="flex">
+                                            {getStatusBadge(kiosk.status)}
+                                        </div>
+                                    </div>
                                 </div>
-                                
-                                <div>
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Address</label>
-                                    <p className="text-sm text-gray-900 break-words">{kiosk.address || 'Not provided'}</p>
-                                </div>
-                                
-                                <div>
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Location Description</label>
-                                    <p className="text-sm text-gray-900 break-words">{kiosk.locationDescription || 'Not provided'}</p>
-                                </div>
-                                
-                                <div>
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Status</label>
-                                    <div className="mt-1">
-                                        {getStatusBadge(kiosk.status)}
+
+                                {/* Divider */}
+                                <div className="border-t border-gray-200"></div>
+
+                                {/* Additional Details Section */}
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-medium text-gray-900 mb-2">Additional Details</h4>
+                                    
+                                    <div>
+                                        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">Description</label>
+                                        <div className="text-sm text-gray-900 whitespace-pre-wrap break-words min-h-[3rem] bg-gray-50 px-3 py-2 rounded">
+                                            {kiosk.description || 'No description provided'}
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">Remarks</label>
+                                        <div className="text-sm text-gray-900 whitespace-pre-wrap break-words min-h-[3rem] bg-gray-50 px-3 py-2 rounded">
+                                            {kiosk.remark || 'No remarks'}
+                                        </div>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {/* Additional Details */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <CardTitle className="flex items-center text-base sm:text-lg">
-                                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                                    Additional Details
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3 sm:space-y-4">
-                                <div>
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Description</label>
-                                    <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">
-                                        {kiosk.description || 'No description provided'}
-                                    </p>
-                                </div>
-                                
-                                <div>
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Remarks</label>
-                                    <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">
-                                        {kiosk.remark || 'No remarks'}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Metadata */}
-                        <Card>
-                            <CardHeader className="pb-3">
+                        {/* Right Column - Record Information & Maintenance Summary */}
+                        <Card className="flex flex-col h-full">
+                            <CardHeader className="pb-3 flex-shrink-0">
                                 <CardTitle className="flex items-center text-base sm:text-lg">
                                     <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                                    Record Information
+                                    Record & Activity Summary
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-3 sm:space-y-4">
-                                <div>
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Created</label>
-                                    <p className="text-sm text-gray-900 break-words">
-                                        {kiosk.createdAt 
-                                            ? new Date(kiosk.createdAt).toLocaleDateString('en-US', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })
-                                            : 'Unknown'
-                                        }
-                                    </p>
+                            <CardContent className="flex-1 space-y-4 sm:space-y-5">
+                                {/* Record Information Section */}
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">Created</label>
+                                        <p className="text-sm text-gray-900 bg-gray-50 px-2 py-1 rounded">
+                                            {kiosk.createdAt 
+                                                ? new Date(kiosk.createdAt).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })
+                                                : 'Unknown'
+                                            }
+                                        </p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">Last Updated</label>
+                                        <p className="text-sm text-gray-900 bg-gray-50 px-2 py-1 rounded">
+                                            {kiosk.updatedAt 
+                                                ? new Date(kiosk.updatedAt).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })
+                                                : 'Unknown'
+                                            }
+                                        </p>
+                                    </div>
                                 </div>
-                                
-                                <div>
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Last Updated</label>
-                                    <p className="text-sm text-gray-900 break-words">
-                                        {kiosk.updatedAt 
-                                            ? new Date(kiosk.updatedAt).toLocaleDateString('en-US', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })
-                                            : 'Unknown'
-                                        }
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
 
-                        {/* Placeholder for future features */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-base sm:text-lg">Maintenance History</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-gray-500">No maintenance records yet</p>
-                                <p className="text-xs text-gray-400 mt-2">Maintenance tracking coming soon</p>
+                                {/* Divider */}
+                                <div className="border-t border-gray-200"></div>
+
+                                {/* Maintenance Activity Summary */}
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-medium text-gray-900 mb-2">Maintenance Activity</h4>
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-blue-50 px-3 py-2 rounded-lg text-center">
+                                            <p className="text-lg font-semibold text-blue-600">
+                                                {maintenanceRecords.length}
+                                            </p>
+                                            <p className="text-xs text-blue-600">Total Records</p>
+                                        </div>
+                                        
+                                        <div className="bg-red-50 px-3 py-2 rounded-lg text-center">
+                                            <p className="text-lg font-semibold text-red-600">
+                                                {maintenanceRecords.filter(r => r.status === 'OPEN').length}
+                                            </p>
+                                            <p className="text-xs text-red-600">Open Issues</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-yellow-50 px-3 py-2 rounded-lg text-center">
+                                            <p className="text-lg font-semibold text-yellow-600">
+                                                {maintenanceRecords.filter(r => r.status === 'IN_PROGRESS').length}
+                                            </p>
+                                            <p className="text-xs text-yellow-600">In Progress</p>
+                                        </div>
+                                        
+                                        <div className="bg-green-50 px-3 py-2 rounded-lg text-center">
+                                            <p className="text-lg font-semibold text-green-600">
+                                                {maintenanceRecords.filter(r => r.status === 'RESOLVED' || r.status === 'CLOSED').length}
+                                            </p>
+                                            <p className="text-xs text-green-600">Completed</p>
+                                        </div>
+                                    </div>
+
+                                    {maintenanceRecords.length > 0 && (
+                                        <div className="bg-gray-50 px-3 py-2 rounded-lg">
+                                            <label className="text-xs font-medium text-gray-700 block mb-1">Last Activity</label>
+                                            <p className="text-sm text-gray-900">
+                                                {new Date(maintenanceRecords[0].reportedDate).toLocaleDateString('en-US', {
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    year: 'numeric'
+                                                })}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
 
-                    {/* Location Photos & Documents */}
-                    <Card>
+                    {/* Maintenance History - Full Width Section */}
+                    <Card className="w-full">
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-base sm:text-lg">Location Photos & Documents</CardTitle>
+                            <CardTitle className="flex items-center text-base sm:text-lg">
+                                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                                Maintenance History
+                            </CardTitle>
+                            <CardDescription className="text-sm">
+                                Complete maintenance tracking and ticket history for this kiosk
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <MaintenanceRecords
+                                records={maintenanceRecords}
+                                workspaceId={workspaceId}
+                                kioskId={kiosk.id}
+                                userRole={userRole}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    {/* Location Photos & Documents */}
+                    <Card className="w-full">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center text-base sm:text-lg">
+                                <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                                Location Photos & Documents
+                            </CardTitle>
                             <CardDescription className="text-sm">
                                 Upload and manage photos and documents for this kiosk location
                             </CardDescription>

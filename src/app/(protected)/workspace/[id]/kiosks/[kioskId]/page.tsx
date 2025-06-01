@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getKioskWithAccess } from '@/lib/server/kiosk-utils';
 import { getKioskAttachments } from '@/lib/server/attachment-utils';
+import { getKioskMaintenanceRecords } from '@/lib/server/kiosk-maintenance-utils';
 import KioskDetailClient from './kiosk-detail-client';
 
 interface PageProps {
@@ -22,6 +23,9 @@ export default async function KioskDetailPage({ params }: PageProps) {
         // Fetch kiosk attachments with signed URLs
         const attachments = await getKioskAttachments(kiosk.id);
 
+        // Fetch maintenance records for this kiosk
+        const maintenanceRecords = await getKioskMaintenanceRecords(id, kiosk.id);
+
         return (
             <KioskDetailClient
                 kiosk={kiosk}
@@ -29,6 +33,7 @@ export default async function KioskDetailPage({ params }: PageProps) {
                 userRole={userRole}
                 workspaceId={id}
                 initialAttachments={attachments}
+                maintenanceRecords={maintenanceRecords}
             />
         );
     } catch (error) {

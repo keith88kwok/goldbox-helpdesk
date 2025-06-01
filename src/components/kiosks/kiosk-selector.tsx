@@ -92,6 +92,14 @@ export function KioskSelector({
         onChange('');
     };
 
+    const handleClearKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.stopPropagation();
+            onChange('');
+        }
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Escape') {
             setIsOpen(false);
@@ -150,14 +158,16 @@ export function KioskSelector({
                     
                     <div className="flex items-center ml-2">
                         {selectedKiosk && !disabled && (
-                            <button
-                                type="button"
+                            <div
+                                role="button"
+                                tabIndex={0}
                                 onClick={handleClear}
-                                className="p-1 hover:bg-gray-100 rounded mr-1 transition-colors"
+                                onKeyDown={handleClearKeyDown}
+                                className="p-1 hover:bg-gray-100 rounded mr-1 transition-colors cursor-pointer"
                                 aria-label="Clear selection"
                             >
                                 <X className="h-3 w-3 text-gray-400" />
-                            </button>
+                            </div>
                         )}
                         <ChevronDown 
                             className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${

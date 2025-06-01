@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '@/utils/amplify-utils';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,7 @@ export default function NewTicketClient({
     workspaceUsers
 }: NewTicketClientProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
@@ -47,6 +48,14 @@ export default function NewTicketClient({
         status: 'OPEN' as const,
         maintenanceTime: ''
     });
+
+    // Pre-fill kiosk from URL parameters
+    useEffect(() => {
+        const preselectedKioskId = searchParams.get('kioskId');
+        if (preselectedKioskId && kiosks.some(k => k.id === preselectedKioskId)) {
+            setFormData(prev => ({ ...prev, kioskId: preselectedKioskId }));
+        }
+    }, [searchParams, kiosks]);
 
     const handleInputChange = (field: keyof typeof formData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
