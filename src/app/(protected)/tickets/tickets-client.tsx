@@ -44,7 +44,7 @@ interface GlobalTicket {
     status: string | null;
     title: string;
     description: string;
-    comments: any[] | null;
+    comments: { id: string; content: string; createdAt: string; userId: string }[] | null;
     attachments: string[] | null;
     reportedDate: string;
     updatedDate: string | null;
@@ -438,15 +438,17 @@ export default function GlobalTicketsClient({
         const [activeStartDate, setActiveStartDate] = useState(new Date());
         const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-        // Map tickets to dates for calendar indicators
+        // Group tickets by date for calendar view
         const ticketsByDate = useMemo(() => {
             const dateMap = new Map<string, GlobalTicket[]>();
-            const today = new Date();
             
             filteredTickets.forEach(ticket => {
-                // Use maintenanceTime if available, otherwise use today's date
-                const dateToUse = ticket.maintenanceTime || today.toISOString();
-                const dateKey = new Date(dateToUse).toDateString();
+                // Use maintenance date if available, otherwise use today's date for immediate attention
+                const targetDate = ticket.maintenanceTime 
+                    ? new Date(ticket.maintenanceTime) 
+                    : new Date(); // Show on today if no maintenance date
+                
+                const dateKey = targetDate.toDateString();
                 if (!dateMap.has(dateKey)) {
                     dateMap.set(dateKey, []);
                 }
@@ -454,7 +456,7 @@ export default function GlobalTicketsClient({
             });
             
             return dateMap;
-        }, [filteredTickets]);
+        }, []);
 
         // Get tickets for selected date
         const selectedDateTickets = useMemo(() => {
@@ -821,13 +823,13 @@ export default function GlobalTicketsClient({
             { id: 'CLOSED', label: 'Closed', color: 'bg-gray-100 border-gray-200 text-gray-800' },
         ] as const;
 
-        // Group tickets by status
+        // Group tickets by status for Kanban view
         const ticketsByStatus = useMemo(() => {
             const groups: Record<string, GlobalTicket[]> = {
-                OPEN: [],
-                IN_PROGRESS: [],
-                RESOLVED: [],
-                CLOSED: [],
+                'OPEN': [],
+                'IN_PROGRESS': [],
+                'RESOLVED': [],
+                'CLOSED': []
             };
 
             filteredTickets.forEach(ticket => {
@@ -840,7 +842,7 @@ export default function GlobalTicketsClient({
             });
 
             return groups;
-        }, [filteredTickets]);
+        }, []);
 
         return (
             <div className="space-y-6">

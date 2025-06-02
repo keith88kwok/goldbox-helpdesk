@@ -1,17 +1,40 @@
-import { getWorkspaceAccess, validateWorkspaceAccess, getUserWorkspaces, type SelectedWorkspace } from './workspace-utils';
+import { getWorkspaceAccess, validateWorkspaceAccess, getUserWorkspaces } from './workspace-utils';
+import type { SelectedWorkspace } from './workspace-utils';
 import { cookiesClient, type Schema } from '@/utils/amplify-utils';
 import { 
-    getCurrentMonthRange, 
+    normalizeDateRange, 
     isTicketInDateRange, 
-    normalizeDateRange 
+    getCurrentMonthRange 
 } from '@/lib/date-utils';
 
-// Re-export SelectedWorkspace for client components
-export type { SelectedWorkspace } from './workspace-utils';
+// Re-export SelectedWorkspace for other modules
+export { type SelectedWorkspace };
 
+// Schema types
 type TicketType = Schema['Ticket']['type'];
 type UserType = Schema['User']['type'];
 type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+type WorkspaceRole = 'ADMIN' | 'MEMBER' | 'VIEWER';
+
+// Types for workspace user data
+type UserWorkspaceData = {
+    workspace: SelectedWorkspace;
+    role: WorkspaceRole;
+    joinedAt: string;
+};
+
+// Types for kiosk data
+type KioskData = {
+    id: string;
+    address: string;
+    description: string | null;
+    [key: string]: unknown;
+};
+
+type WorkspaceKiosks = {
+    workspaceId: string;
+    kiosks: KioskData[];
+};
 
 // Type for ticket data with only safe fields (no functions)
 export type SelectedTicket = {
@@ -24,7 +47,7 @@ export type SelectedTicket = {
     status: string | null;
     title: string;
     description: string;
-    comments: any[] | null; // eslint-disable-line @typescript-eslint/no-explicit-any
+    comments: { id: string; content: string; createdAt: string; userId: string }[] | null;
     attachments: string[] | null;
     reportedDate: string;
     updatedDate: string | null;
@@ -51,6 +74,19 @@ function extractTicketFields(ticket: TicketType, userMap: Map<string, UserType>)
     const reporter = userMap.get(ticket.reporterId);
     const assignee = ticket.assigneeId ? userMap.get(ticket.assigneeId) : null;
 
+    // Handle comments - convert from database format to expected format
+    let comments: { id: string; content: string; createdAt: string; userId: string }[] | null = null;
+    if (ticket.comments && Array.isArray(ticket.comments)) {
+        comments = ticket.comments
+            .filter((comment): comment is Record<string, unknown> => typeof comment === 'object' && comment !== null)
+            .map((comment) => ({
+                id: String(comment.id || ''),
+                content: String(comment.content || ''),
+                createdAt: String(comment.createdAt || ''),
+                userId: String(comment.userId || '')
+            }));
+    }
+
     return {
         id: ticket.id,
         ticketId: ticket.ticketId,
@@ -61,7 +97,7 @@ function extractTicketFields(ticket: TicketType, userMap: Map<string, UserType>)
         status: ticket.status || null,
         title: ticket.title,
         description: ticket.description,
-        comments: ticket.comments || null,
+        comments,
         attachments: ticket.attachments ? ticket.attachments.filter(att => att !== null) : null,
         reportedDate: ticket.reportedDate,
         updatedDate: ticket.updatedDate || null,
@@ -237,7 +273,7 @@ export async function updateTicket(
         title: string;
         description: string;
         maintenanceTime: string;
-        comments: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+        comments: (string | number | boolean | object | unknown[] | null)[] | null;
         attachments: string[];
     }>
 ): Promise<TicketType> {
@@ -532,19 +568,19 @@ export async function getAllUserAccessibleTickets(
 
     // Filter workspaces if specific workspace requested
     const targetWorkspaces = filters?.workspaceId 
-        ? userWorkspaces.filter((uw: { workspace: SelectedWorkspace; role: string; joinedAt: string }) => uw.workspace.id === filters.workspaceId)
+        ? userWorkspaces.filter((uw: UserWorkspaceData) => uw.workspace.id === filters.workspaceId)
         : userWorkspaces;
 
     if (targetWorkspaces.length === 0) {
         return {
             tickets: [],
-            workspaces: userWorkspaces.map((uw: { workspace: SelectedWorkspace; role: string; joinedAt: string }) => uw.workspace),
+            workspaces: userWorkspaces.map((uw: UserWorkspaceData) => uw.workspace),
             totalCount: 0
         };
     }
 
     // Get tickets from all target workspaces in parallel
-    const workspaceTicketsPromises = targetWorkspaces.map(async (userWorkspace: { workspace: SelectedWorkspace; role: string; joinedAt: string }) => {
+    const workspaceTicketsPromises = targetWorkspaces.map(async (userWorkspace: UserWorkspaceData) => {
         try {
             // Build filter conditions for each workspace
             const workspaceFilters: Parameters<typeof searchTickets>[1] = {
@@ -577,7 +613,7 @@ export async function getAllUserAccessibleTickets(
     const workspaceTickets = await Promise.all(workspaceTicketsPromises);
 
     // Get all kiosks for address mapping
-    const allKiosksPromises = targetWorkspaces.map(async (userWorkspace: { workspace: SelectedWorkspace; role: string; joinedAt: string }) => {
+    const allKiosksPromises = targetWorkspaces.map(async (userWorkspace: UserWorkspaceData) => {
         try {
             const { data: kiosks } = await cookiesClient.models.Kiosk.list({
                 filter: {
@@ -601,8 +637,8 @@ export async function getAllUserAccessibleTickets(
     
     // Create kiosk lookup map
     const kioskMap = new Map<string, { address: string; description: string }>();
-    workspaceKiosks.forEach((wk: { workspaceId: string; kiosks: any[] }) => {
-        wk.kiosks.forEach((kiosk: any) => {
+    workspaceKiosks.forEach((wk: WorkspaceKiosks) => {
+        wk.kiosks.forEach((kiosk: KioskData) => {
             kioskMap.set(kiosk.id, {
                 address: kiosk.address || 'Unknown address',
                 description: kiosk.description || ''
@@ -628,13 +664,13 @@ export async function getAllUserAccessibleTickets(
     );
 
     // Sort by reported date (most recent first)
-    enhancedTickets.sort((a: any, b: any) => 
+    enhancedTickets.sort((a, b) => 
         new Date(b.reportedDate).getTime() - new Date(a.reportedDate).getTime()
     );
 
     return {
         tickets: enhancedTickets,
-        workspaces: userWorkspaces.map((uw: { workspace: SelectedWorkspace; role: string; joinedAt: string }) => uw.workspace),
+        workspaces: userWorkspaces.map((uw: UserWorkspaceData) => uw.workspace),
         totalCount: enhancedTickets.length
     };
 } 

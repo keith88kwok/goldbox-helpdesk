@@ -195,7 +195,7 @@ export async function exportGlobalTicketsAction(
         // Get filtered tickets across all workspaces
         const { tickets: globalTickets, workspaces } = await getAllUserAccessibleTickets(userId, {
             searchTerm: filters.searchTerm,
-            status: filters.status as any,
+            status: filters.status as 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | undefined,
             dateFrom: filters.dateFrom,
             dateTo: filters.dateTo,
             assigneeId: filters.assigneeId,
