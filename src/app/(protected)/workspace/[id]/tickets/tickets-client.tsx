@@ -24,6 +24,11 @@ import { type SelectedTicket, type SelectedWorkspace } from '@/lib/server/ticket
 import CalendarView from '@/components/tickets/calendar-view';
 import KanbanView from '@/components/tickets/kanban-view';
 import { ExportTicketsButton } from '@/components/tickets/export-tickets-button';
+import { 
+    getCurrentMonthRange, 
+    getLastMonthRange, 
+    getCurrentYearRange
+} from '@/lib/date-utils';
 
 interface TicketsClientProps {
     tickets: SelectedTicket[];
@@ -65,20 +70,9 @@ export default function TicketsClient({
     // Set current month as default if no date filters are provided
     useEffect(() => {
         if (!initialFilters.dateFrom && !initialFilters.dateTo && !searchParams.get('dateFrom') && !searchParams.get('dateTo')) {
-            const now = new Date();
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            
-            // Format dates properly without timezone conversion
-            const formatLocalDate = (date: Date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            };
-            
-            setDateFrom(formatLocalDate(firstDay));
-            setDateTo(formatLocalDate(lastDay));
+            const currentMonthRange = getCurrentMonthRange();
+            setDateFrom(currentMonthRange.dateFrom);
+            setDateTo(currentMonthRange.dateTo);
             setShowFilters(true); // Show filters when default is applied
         }
     }, [initialFilters.dateFrom, initialFilters.dateTo, searchParams]);
@@ -687,19 +681,9 @@ export default function TicketsClient({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                    const now = new Date();
-                                    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-                                    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                                    
-                                    const formatLocalDate = (date: Date) => {
-                                        const year = date.getFullYear();
-                                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                                        const day = String(date.getDate()).padStart(2, '0');
-                                        return `${year}-${month}-${day}`;
-                                    };
-                                    
-                                    handleFilterChange('dateFrom', formatLocalDate(firstDay));
-                                    handleFilterChange('dateTo', formatLocalDate(lastDay));
+                                    const currentMonthRange = getCurrentMonthRange();
+                                    handleFilterChange('dateFrom', currentMonthRange.dateFrom);
+                                    handleFilterChange('dateTo', currentMonthRange.dateTo);
                                 }}
                                 className="text-xs"
                             >
@@ -709,19 +693,9 @@ export default function TicketsClient({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                    const now = new Date();
-                                    const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                                    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
-                                    
-                                    const formatLocalDate = (date: Date) => {
-                                        const year = date.getFullYear();
-                                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                                        const day = String(date.getDate()).padStart(2, '0');
-                                        return `${year}-${month}-${day}`;
-                                    };
-                                    
-                                    handleFilterChange('dateFrom', formatLocalDate(firstDay));
-                                    handleFilterChange('dateTo', formatLocalDate(lastDay));
+                                    const lastMonthRange = getLastMonthRange();
+                                    handleFilterChange('dateFrom', lastMonthRange.dateFrom);
+                                    handleFilterChange('dateTo', lastMonthRange.dateTo);
                                 }}
                                 className="text-xs"
                             >
@@ -731,19 +705,9 @@ export default function TicketsClient({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                    const now = new Date();
-                                    const firstDay = new Date(now.getFullYear(), 0, 1);
-                                    const lastDay = new Date(now.getFullYear(), 11, 31);
-                                    
-                                    const formatLocalDate = (date: Date) => {
-                                        const year = date.getFullYear();
-                                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                                        const day = String(date.getDate()).padStart(2, '0');
-                                        return `${year}-${month}-${day}`;
-                                    };
-                                    
-                                    handleFilterChange('dateFrom', formatLocalDate(firstDay));
-                                    handleFilterChange('dateTo', formatLocalDate(lastDay));
+                                    const currentYearRange = getCurrentYearRange();
+                                    handleFilterChange('dateFrom', currentYearRange.dateFrom);
+                                    handleFilterChange('dateTo', currentYearRange.dateTo);
                                 }}
                                 className="text-xs"
                             >

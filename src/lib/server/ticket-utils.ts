@@ -1,5 +1,10 @@
 import { getWorkspaceAccess, validateWorkspaceAccess, type SelectedWorkspace } from './workspace-utils';
 import { cookiesClient, type Schema } from '@/utils/amplify-utils';
+import { 
+    getCurrentMonthRange, 
+    isTicketInDateRange, 
+    normalizeDateRange 
+} from '@/lib/date-utils';
 
 // Re-export SelectedWorkspace for client components
 export type { SelectedWorkspace } from './workspace-utils';
@@ -82,21 +87,13 @@ export async function getWorkspaceTickets(workspaceId: string, options?: {
     let dateTo = options?.dateTo;
     
     if (options?.useCurrentMonthDefault && !dateFrom && !dateTo) {
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        
-        // Format dates properly without timezone conversion
-        const formatLocalDate = (date: Date) => {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-        
-        dateFrom = formatLocalDate(firstDay);
-        dateTo = formatLocalDate(lastDay) + 'T23:59:59.999Z';
+        const currentMonthRange = getCurrentMonthRange();
+        dateFrom = currentMonthRange.dateFrom;
+        dateTo = currentMonthRange.dateTo;
     }
+
+    // Normalize date range for consistent filtering
+    const normalizedDates = normalizeDateRange(dateFrom, dateTo);
 
     // Build filter conditions
     const filterConditions: Record<string, unknown>[] = [
@@ -116,28 +113,11 @@ export async function getWorkspaceTickets(workspaceId: string, options?: {
 
     let filteredTickets = tickets || [];
 
-    // Apply date filtering with maintenance date logic
-    if (dateFrom || dateTo) {
-        filteredTickets = filteredTickets.filter(ticket => {
-            // Use maintenanceTime if available, otherwise fall back to reportedDate
-            const effectiveDate = ticket.maintenanceTime || ticket.reportedDate;
-            
-            if (!effectiveDate) return false;
-            
-            const ticketDate = new Date(effectiveDate);
-            
-            if (dateFrom) {
-                const fromDate = new Date(dateFrom);
-                if (ticketDate < fromDate) return false;
-            }
-            
-            if (dateTo) {
-                const toDate = new Date(dateTo);
-                if (ticketDate > toDate) return false;
-            }
-            
-            return true;
-        });
+    // Apply date filtering with standardized logic
+    if (normalizedDates.dateFrom || normalizedDates.dateTo) {
+        filteredTickets = filteredTickets.filter(ticket => 
+            isTicketInDateRange(ticket, normalizedDates.dateFrom, normalizedDates.dateTo)
+        );
     }
 
     // Get unique user IDs from tickets
@@ -333,30 +313,12 @@ export async function searchTickets(
 
     let filteredTickets = tickets || [];
 
-    // Apply date filtering with maintenance date logic
+    // Apply date filtering with standardized logic
     if (filters.dateFrom || filters.dateTo) {
-        filteredTickets = filteredTickets.filter(ticket => {
-            // Use maintenanceTime if available and useMaintenance is true, otherwise fall back to reportedDate
-            const effectiveDate = (filters.useMaintenance && ticket.maintenanceTime) 
-                ? ticket.maintenanceTime 
-                : ticket.maintenanceTime || ticket.reportedDate;
-            
-            if (!effectiveDate) return false;
-            
-            const ticketDate = new Date(effectiveDate);
-            
-            if (filters.dateFrom) {
-                const fromDate = new Date(filters.dateFrom);
-                if (ticketDate < fromDate) return false;
-            }
-            
-            if (filters.dateTo) {
-                const toDate = new Date(filters.dateTo);
-                if (ticketDate > toDate) return false;
-            }
-            
-            return true;
-        });
+        const normalizedDates = normalizeDateRange(filters.dateFrom, filters.dateTo);
+        filteredTickets = filteredTickets.filter(ticket => 
+            isTicketInDateRange(ticket, normalizedDates.dateFrom, normalizedDates.dateTo)
+        );
     }
 
     // Apply text search if provided (description and title search)

@@ -2,7 +2,8 @@
 
 import { cookiesClient, type Schema } from '@/utils/amplify-utils';
 import { TicketExportData } from '@/lib/csv-utils';
-import { getWorkspaceAccess } from './workspace-utils';
+import { validateWorkspaceAccess } from './workspace-utils';
+import { isTicketInDateRange, normalizeDateRange } from '@/lib/date-utils';
 
 // Types for better TypeScript support
 type TicketType = Schema['Ticket']['type'];
@@ -29,25 +30,29 @@ export async function exportTicketsAction(
     filteredCount: number;
 }> {
     try {
-        // Validate access to workspace
-        const access = await getWorkspaceAccess(workspaceId);
-        
-        // Build basic filter conditions for database query
+        // Validate workspace access (requires at least VIEWER role)
+        const access = await validateWorkspaceAccess(workspaceId, 'VIEWER');
+
+        // Get workspace data from access validation
+        const { data: workspace } = await cookiesClient.models.Workspace.get({ id: workspaceId });
+        if (!workspace) {
+            throw new Error('Workspace not found');
+        }
+
+        // Build filter conditions for database query
         const filterConditions: Record<string, unknown>[] = [
             { workspaceId: { eq: workspaceId } }
         ];
 
-        // Add simple status filter if provided
         if (filters.status && filters.status !== 'ALL') {
             filterConditions.push({ status: { eq: filters.status } });
         }
 
-        // Add assignee filter if provided
         if (filters.assigneeId) {
             filterConditions.push({ assigneeId: { eq: filters.assigneeId } });
         }
 
-        // Get all tickets for the workspace
+        // Get all tickets for this workspace
         const { data: tickets, errors } = await cookiesClient.models.Ticket.list({
             filter: {
                 and: filterConditions
@@ -55,34 +60,25 @@ export async function exportTicketsAction(
         });
 
         if (errors) {
-            throw new Error(`Failed to fetch tickets: ${errors.map((e: { message: string }) => e.message).join(', ')}`);
+            throw new Error(`Failed to fetch tickets: ${errors.map(e => e.message).join(', ')}`);
         }
 
+        const totalCount = tickets?.length || 0;
         let filteredTickets = tickets || [];
-        const totalCount = filteredTickets.length;
 
-        // Apply date filtering with maintenance date logic
+        // Apply date filtering with standardized logic
         if (filters.dateFrom || filters.dateTo) {
-            filteredTickets = filteredTickets.filter((ticket: TicketType) => {
-                // Use maintenanceTime if available, otherwise fall back to reportedDate
-                const effectiveDate = ticket.maintenanceTime || ticket.reportedDate;
-                
-                if (!effectiveDate) return false;
-                
-                const ticketDate = new Date(effectiveDate);
-                
-                if (filters.dateFrom) {
-                    const fromDate = new Date(filters.dateFrom);
-                    if (ticketDate < fromDate) return false;
-                }
-                
-                if (filters.dateTo) {
-                    const toDate = new Date(filters.dateTo);
-                    if (ticketDate > toDate) return false;
-                }
-                
-                return true;
-            });
+            const normalizedDates = normalizeDateRange(filters.dateFrom, filters.dateTo);
+            filteredTickets = filteredTickets.filter((ticket: TicketType) => 
+                isTicketInDateRange(
+                    {
+                        maintenanceTime: ticket.maintenanceTime || null,
+                        reportedDate: ticket.reportedDate
+                    }, 
+                    normalizedDates.dateFrom, 
+                    normalizedDates.dateTo
+                )
+            );
         }
 
         // Apply text search if provided
