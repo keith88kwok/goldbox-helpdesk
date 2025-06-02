@@ -125,6 +125,10 @@ const schema = a.schema({
             reportedDate: a.datetime().required(),
             updatedDate: a.datetime(),
             maintenanceTime: a.datetime(),
+            // Soft delete fields
+            isDeleted: a.boolean().default(false),
+            deletedAt: a.datetime(),
+            deletedBy: a.id(),
             // Relationships
             workspace: a.belongsTo("Workspace", "workspaceId"),
             kiosk: a.belongsTo("Kiosk", "kioskId"),

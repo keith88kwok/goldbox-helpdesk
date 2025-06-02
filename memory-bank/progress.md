@@ -78,18 +78,20 @@
   - Responsive design with modern UI
 
 #### Ticket Management
-- **Status**: ✅ 100% Complete (Core Features)
+- **Status**: ✅ 100% Complete (Core Features + Soft Delete)
 - **Priority**: High (Phase 4)
 - **Dependencies**: Kiosk management
 - **Key Features**:
   - Complete CRUD operations (Create, Read, Update, Delete)
+  - Soft delete functionality with audit trail and restore capability
   - Ticket detail pages with rich information display
   - Status management (Open, In Progress, Resolved, Closed)
   - Assignment system for workspace users
   - Search and filtering by title, description, status
-  - Role-based access control
+  - Role-based access control (ADMIN-only delete permissions)
   - Pre-populated edit forms with proper validation
   - Responsive design with status color coding
+  - Delete confirmation dialogs with data safety messaging
 
 #### Comments System
 - **Status**: 🔲 Not Started
@@ -118,6 +120,29 @@
 ## Current Development Status
 
 ### Latest Features Completed ✅
+
+#### Soft Delete Implementation (COMPLETED)
+- **Feature**: Complete soft delete functionality for tickets with ADMIN-only permissions
+- **Improvements**:
+  - **Schema Enhancement**: Added `isDeleted`, `deletedAt`, and `deletedBy` fields to Ticket model
+  - **Backend Logic**: All ticket queries automatically filter out soft-deleted tickets
+  - **Server Actions**: Created `softDeleteTicketAction` and `restoreTicketAction` with validation
+  - **UI Components**: Built reusable `DeleteTicketDialog` with confirmation and error handling
+  - **Permission Control**: ADMIN-only delete access with proper role validation
+- **Technical Benefits**:
+  - Complete data safety with no permanent data loss
+  - Full audit trail tracking who deleted what and when
+  - Enterprise-grade permission security with ADMIN-only access
+  - Consistent UI with red delete buttons and confirmation dialogs
+  - Restore capability for accidentally deleted tickets
+- **Files Updated**:
+  - `amplify/data/resource.ts` - Added soft delete fields to Ticket model schema
+  - `src/lib/server/ticket-utils.ts` - Updated all queries and added soft delete functions
+  - `src/lib/server/ticket-actions.ts` - Added server actions for delete and restore
+  - `src/components/tickets/delete-ticket-dialog.tsx` - New confirmation dialog component
+  - `src/components/ui/button.tsx` - Added destructive variant for delete buttons
+  - `src/app/(protected)/workspace/[id]/tickets/[ticketId]/ticket-detail-client.tsx` - Added delete button
+  - `src/app/(protected)/workspace/[id]/tickets/tickets-client.tsx` - Added delete buttons to all views
 
 #### Quick Date Presets Edge Case Resolution (COMPLETED)
 - **Feature**: Complete fix for all edge case issues with Quick Date Presets for date range filtering

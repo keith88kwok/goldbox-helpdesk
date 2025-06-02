@@ -108,7 +108,7 @@ export async function exportTicketsAction(
         const { data: allUsers } = await cookiesClient.models.User.list();
 
         // Create lookup maps
-        const kioskMap = new Map((allKiosks || []).map((k: KioskType) => [k.kioskId, k]));
+        const kioskMap = new Map((allKiosks || []).map((k: KioskType) => [k.id, k]));
         const userMap = new Map((allUsers || []).map((u: UserType) => [u.userId, u]));
 
         // Format date helper

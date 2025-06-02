@@ -29,6 +29,10 @@ export type SelectedTicket = {
     reportedDate: string;
     updatedDate: string | null;
     maintenanceTime: string | null;
+    // Soft delete fields
+    isDeleted: boolean | null;
+    deletedAt: string | null;
+    deletedBy: string | null;
     // Enhanced user information
     reporterName: string | null;
     assigneeName: string | null;
@@ -62,6 +66,11 @@ function extractTicketFields(ticket: TicketType, userMap: Map<string, UserType>)
         reportedDate: ticket.reportedDate,
         updatedDate: ticket.updatedDate || null,
         maintenanceTime: ticket.maintenanceTime || null,
+        // Soft delete fields
+        isDeleted: ticket.isDeleted || null,
+        deletedAt: ticket.deletedAt || null,
+        deletedBy: ticket.deletedBy || null,
+        // Enhanced user information
         reporterName: reporter?.name || null,
         assigneeName: assignee?.name || null,
     };
@@ -97,7 +106,14 @@ export async function getWorkspaceTickets(workspaceId: string, options?: {
 
     // Build filter conditions
     const filterConditions: Record<string, unknown>[] = [
-        { workspaceId: { eq: workspaceId } }
+        { workspaceId: { eq: workspaceId } },
+        // Exclude soft-deleted tickets
+        { 
+            or: [
+                { isDeleted: { ne: true } },
+                { isDeleted: { attributeExists: false } }
+            ]
+        }
     ];
 
     // Get all tickets first
@@ -245,19 +261,67 @@ export async function updateTicket(
 }
 
 /**
- * Delete ticket (requires ADMIN role)
+ * Soft delete ticket (requires ADMIN role)
  */
-export async function deleteTicket(workspaceId: string, ticketId: string): Promise<void> {
+export async function softDeleteTicket(workspaceId: string, ticketId: string, deletedBy: string): Promise<void> {
     // Validate access (requires ADMIN)
     await validateWorkspaceAccess(workspaceId, 'ADMIN');
 
     // Verify ticket exists and belongs to workspace
     const { ticket: existingTicket } = await getTicketWithAccess(workspaceId, ticketId);
 
-    const { errors } = await cookiesClient.models.Ticket.delete({ id: existingTicket.id });
+    // Check if ticket is already deleted
+    if (existingTicket.isDeleted) {
+        throw new Error('Ticket is already deleted');
+    }
+
+    const { errors } = await cookiesClient.models.Ticket.update({
+        id: existingTicket.id,
+        isDeleted: true,
+        deletedAt: new Date().toISOString(),
+        deletedBy,
+        updatedDate: new Date().toISOString(),
+    });
 
     if (errors) {
         throw new Error(`Failed to delete ticket: ${errors.map(e => e.message).join(', ')}`);
+    }
+}
+
+/**
+ * Restore soft-deleted ticket (requires ADMIN role)
+ */
+export async function restoreTicket(workspaceId: string, ticketId: string): Promise<void> {
+    // Validate access (requires ADMIN)
+    await validateWorkspaceAccess(workspaceId, 'ADMIN');
+
+    // Get the specific ticket (including deleted ones)
+    const { data: ticket, errors } = await cookiesClient.models.Ticket.get({ id: ticketId });
+
+    if (errors || !ticket) {
+        throw new Error(`Ticket not found: ${ticketId}`);
+    }
+
+    // Verify ticket belongs to the workspace
+    if (ticket.workspaceId !== workspaceId) {
+        throw new Error(`Ticket ${ticketId} does not belong to workspace ${workspaceId}`);
+    }
+
+    // Check if ticket is actually deleted
+    if (!ticket.isDeleted) {
+        throw new Error('Ticket is not deleted');
+    }
+
+    const { errors: updateErrors } = await cookiesClient.models.Ticket.update({
+        id: ticket.id,
+        isDeleted: false,
+        deletedAt: null,
+        deletedBy: null,
+        updatedDate: new Date().toISOString(),
+    });
+
+    if (updateErrors) {
+        throw new Error(`Failed to restore ticket: ${updateErrors.map(e => e.message).join(', ')}`);
     }
 }
 
@@ -285,7 +349,14 @@ export async function searchTickets(
 
     // Build filter conditions for database query
     const filterConditions: Record<string, unknown>[] = [
-        { workspaceId: { eq: workspaceId } }
+        { workspaceId: { eq: workspaceId } },
+        // Exclude soft-deleted tickets
+        { 
+            or: [
+                { isDeleted: { ne: true } },
+                { isDeleted: { attributeExists: false } }
+            ]
+        }
     ];
 
     if (filters.status) {
@@ -354,7 +425,16 @@ export async function getUserTickets(userId: string): Promise<SelectedTicket[]> 
     // Get tickets assigned to this user
     const { data: tickets, errors } = await cookiesClient.models.Ticket.list({
         filter: {
-            assigneeId: { eq: userId }
+            and: [
+                { assigneeId: { eq: userId } },
+                // Exclude soft-deleted tickets
+                { 
+                    or: [
+                        { isDeleted: { ne: true } },
+                        { isDeleted: { attributeExists: false } }
+                    ]
+                }
+            ]
         }
     });
 

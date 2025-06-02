@@ -14,7 +14,8 @@ import {
     Eye,
     X,
     ArrowLeft,
-    Search
+    Search,
+    Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,8 @@ import { type SelectedTicket, type SelectedWorkspace } from '@/lib/server/ticket
 import CalendarView from '@/components/tickets/calendar-view';
 import KanbanView from '@/components/tickets/kanban-view';
 import { ExportTicketsButton } from '@/components/tickets/export-tickets-button';
+import { DeleteTicketDialog } from '@/components/tickets/delete-ticket-dialog';
+import { softDeleteTicketAction } from '@/lib/server/ticket-actions';
 import { 
     getCurrentMonthRange, 
     getLastMonthRange, 
@@ -63,6 +66,7 @@ export default function TicketsClient({
     const [dateTo, setDateTo] = useState(initialFilters.dateTo || '');
     const [viewMode, setViewMode] = useState<'calendar' | 'list' | 'kanban' | 'cards'>('list');
     const [showFilters, setShowFilters] = useState(false);
+    const [deleteTicket, setDeleteTicket] = useState<SelectedTicket | null>(null);
     
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -162,6 +166,20 @@ export default function TicketsClient({
 
     const canCreateTicket = userRole === 'ADMIN' || userRole === 'MEMBER';
     const canEditTickets = userRole === 'ADMIN' || userRole === 'MEMBER';
+    const canDeleteTickets = userRole === 'ADMIN';
+
+    // Handle ticket deletion
+    const handleDeleteTicket = async (ticket: SelectedTicket) => {
+        const result = await softDeleteTicketAction(workspace.id, ticket.id, 'current-user-id'); // TODO: Get actual user ID
+        
+        if (result.success) {
+            // Refresh the page to show updated list
+            router.refresh();
+        } else {
+            // Error will be handled by the dialog component
+            throw new Error(result.error || 'Failed to delete ticket');
+        }
+    };
 
     // Multi-View Toggle Component
     const ViewToggle = () => (
@@ -326,6 +344,20 @@ export default function TicketsClient({
                                                 <Edit className="h-3 w-3" />
                                                 Edit
                                             </Button>
+                                            {canDeleteTickets && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setDeleteTicket(ticket);
+                                                    }}
+                                                    className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                    Delete
+                                                </Button>
+                                            )}
                                         </div>
                                     </td>
                                 )}
@@ -400,6 +432,20 @@ export default function TicketsClient({
                                     <Edit className="h-3 w-3" />
                                     Edit
                                 </Button>
+                                {canDeleteTickets && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setDeleteTicket(ticket);
+                                        }}
+                                        className="flex-1 min-h-[44px] flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                        <Trash2 className="h-3 w-3" />
+                                        Delete
+                                    </Button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -775,6 +821,17 @@ export default function TicketsClient({
                         Showing {filteredTickets.length} of {tickets.length} tickets
                     </p>
                 </div>
+            )}
+
+            {/* Delete Confirmation Dialog */}
+            {deleteTicket && (
+                <DeleteTicketDialog
+                    isOpen={!!deleteTicket}
+                    onClose={() => setDeleteTicket(null)}
+                    onConfirm={() => handleDeleteTicket(deleteTicket)}
+                    ticketTitle={deleteTicket.title}
+                    ticketId={deleteTicket.ticketId}
+                />
             )}
         </div>
     );

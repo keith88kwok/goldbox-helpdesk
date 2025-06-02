@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { type SelectedTicket, type SelectedWorkspace } from '@/lib/server/ticket-utils';
 import { type SelectedKiosk } from '@/lib/server/kiosk-utils';
 import { type TicketComment } from '@/lib/types/comment';
@@ -10,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import CommentList from '@/components/tickets/comment-list';
 import { AttachmentManager } from '@/components/tickets/attachment-manager';
+import { DeleteTicketDialog } from '@/components/tickets/delete-ticket-dialog';
 import { 
     Ticket, 
     ArrowLeft, 
@@ -17,12 +19,13 @@ import {
     MapPin,
     Calendar,
     Clock,
-    FileText
+    FileText,
+    Trash2
 } from 'lucide-react';
 import { InlineMaintenanceDateEditor, AddMaintenanceDateButton } from '@/components/tickets/inline-maintenance-date-editor';
 import { InlineKioskEditor } from '@/components/kiosks/inline-kiosk-editor';
 import { InlineAssigneeEditor, AddAssigneeButton } from '@/components/tickets/inline-assignee-editor';
-import { updateTicketMaintenanceDateAction, updateTicketAssigneeAction } from '@/lib/server/ticket-actions';
+import { updateTicketMaintenanceDateAction, updateTicketAssigneeAction, softDeleteTicketAction } from '@/lib/server/ticket-actions';
 
 interface WorkspaceUser {
     id: string;
@@ -47,10 +50,10 @@ interface TicketDetailClientProps {
 
 // Status color mapping
 const statusColors = {
-    OPEN: 'bg-red-100 text-red-800 border-red-200',
-    IN_PROGRESS: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    RESOLVED: 'bg-green-100 text-green-800 border-green-200',
-    CLOSED: 'bg-gray-100 text-gray-800 border-gray-200',
+    OPEN: 'bg-blue-100 text-blue-800',
+    IN_PROGRESS: 'bg-yellow-100 text-yellow-800',
+    RESOLVED: 'bg-green-100 text-green-800',
+    CLOSED: 'bg-gray-100 text-gray-800',
 } as const;
 
 export default function TicketDetailClient({ 
@@ -66,6 +69,7 @@ export default function TicketDetailClient({
     workspaceUsers
 }: TicketDetailClientProps) {
     const router = useRouter();
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -77,7 +81,9 @@ export default function TicketDetailClient({
         });
     };
 
+    // Permission checks
     const canEdit = userRole === 'ADMIN' || userRole === 'MEMBER';
+    const canDelete = userRole === 'ADMIN';
 
     // Handle maintenance date updates
     const handleMaintenanceDateUpdate = async (newDate: string | null): Promise<boolean> => {
@@ -128,8 +134,21 @@ export default function TicketDetailClient({
     // Handle kiosk updates
     const handleKioskUpdate = (success: boolean) => {
         if (success) {
-            // Refresh the page to show updated data
+            // Page will be revalidated by the server action
             router.refresh();
+        }
+    };
+
+    // Handle ticket deletion
+    const handleDeleteTicket = async () => {
+        const result = await softDeleteTicketAction(workspaceId, ticket.id, userId);
+        
+        if (result.success) {
+            // Redirect to tickets list after successful deletion
+            router.push(`/workspace/${workspaceId}/tickets`);
+        } else {
+            // Error will be handled by the dialog component
+            throw new Error(result.error || 'Failed to delete ticket');
         }
     };
 
@@ -336,11 +355,30 @@ export default function TicketDetailClient({
                                     <MapPin className="h-4 w-4 mr-2" />
                                     View Kiosk
                                 </Button>
+                                {canDelete && (
+                                    <Button
+                                        variant="destructive"
+                                        className="w-full min-h-[44px]"
+                                        onClick={() => setShowDeleteDialog(true)}
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete Ticket
+                                    </Button>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <DeleteTicketDialog
+                isOpen={showDeleteDialog}
+                onClose={() => setShowDeleteDialog(false)}
+                onConfirm={handleDeleteTicket}
+                ticketTitle={ticket.title}
+                ticketId={ticket.ticketId}
+            />
         </div>
     );
 } 

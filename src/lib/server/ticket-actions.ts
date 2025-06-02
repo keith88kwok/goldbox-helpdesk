@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { cookiesClient } from '@/utils/amplify-utils';
 import { validateWorkspaceAccess } from './workspace-utils';
+import { softDeleteTicket, restoreTicket } from './ticket-utils';
 
 // Helper function to validate and sanitize datetime input (reused from forms)
 const sanitizeMaintenanceTime = (value: string): string | null => {
@@ -203,6 +204,57 @@ export async function updateTicketAssigneeAction(
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Failed to update assignee'
+        };
+    }
+}
+
+/**
+ * Soft delete ticket action (requires ADMIN role)
+ */
+export async function softDeleteTicketAction(
+    workspaceId: string,
+    ticketId: string,
+    deletedBy: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        await softDeleteTicket(workspaceId, ticketId, deletedBy);
+
+        // Revalidate all ticket-related pages
+        revalidatePath(`/workspace/${workspaceId}/tickets`);
+        revalidatePath(`/workspace/${workspaceId}/tickets/${ticketId}`);
+        revalidatePath(`/workspace/${workspaceId}/dashboard`);
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error soft deleting ticket:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to delete ticket'
+        };
+    }
+}
+
+/**
+ * Restore soft-deleted ticket action (requires ADMIN role)
+ */
+export async function restoreTicketAction(
+    workspaceId: string,
+    ticketId: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        await restoreTicket(workspaceId, ticketId);
+
+        // Revalidate all ticket-related pages
+        revalidatePath(`/workspace/${workspaceId}/tickets`);
+        revalidatePath(`/workspace/${workspaceId}/tickets/${ticketId}`);
+        revalidatePath(`/workspace/${workspaceId}/dashboard`);
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error restoring ticket:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to restore ticket'
         };
     }
 } 
