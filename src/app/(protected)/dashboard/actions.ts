@@ -15,8 +15,8 @@ export async function createWorkspaceAction(formData: FormData) {
             description: description || undefined
         });
 
-        // Revalidate the workspaces page to show the new workspace
-        revalidatePath('/workspaces');
+        // Revalidate the dashboard page to show the new workspace
+        revalidatePath('/dashboard');
 
         // Return success with workspace data
         return {
@@ -45,16 +45,16 @@ export async function createWorkspaceAndRedirectAction(formData: FormData) {
             description: description || undefined
         });
 
-        // Revalidate the workspaces page
-        revalidatePath('/workspaces');
+        // Revalidate the dashboard page
+        revalidatePath('/dashboard');
 
         // Redirect to the new workspace dashboard
         redirect(`/workspace/${workspace.id}/dashboard`);
 
     } catch (error) {
         console.error('Error creating workspace:', error);
-        // On error, redirect back to workspaces with error message
+        // On error, redirect back to dashboard with error message
         const errorMessage = error instanceof Error ? error.message : 'Failed to create workspace';
-        redirect(`/workspaces?error=${encodeURIComponent(errorMessage)}`);
+        redirect(`/dashboard?error=${encodeURIComponent(errorMessage)}`);
     }
 } 

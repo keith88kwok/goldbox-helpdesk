@@ -27,11 +27,11 @@ export default function DashboardClient({ workspace, userRole, stats }: Dashboar
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => router.push('/workspaces')}
+                                onClick={() => router.push('/dashboard')}
                                 className="w-fit sm:w-auto"
                             >
                                 <ArrowLeft className="h-4 w-4 mr-2" />
-                                Back to Workspaces
+                                Back to Dashboard
                             </Button>
                             <div>
                                 <h1 className="text-lg sm:text-xl font-semibold text-gray-900">

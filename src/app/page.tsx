@@ -6,19 +6,19 @@ import { useRedirect } from '@/hooks/use-redirect';
 
 export default function HomePage() {
     const { isAuthenticated, isLoading, isInitializing } = useAuth();
-    const { redirectToLogin, redirectToWorkspaces } = useRedirect();
+    const { redirectToLogin } = useRedirect();
 
     useEffect(() => {
         if (!isLoading && !isInitializing) {
             if (isAuthenticated) {
-                // Redirect authenticated users to their workspaces with reason
-                redirectToWorkspaces('Welcome back! Please select a workspace to continue.');
+                // Redirect authenticated users to dashboard (new landing page)
+                window.location.href = '/dashboard';
             } else {
                 // Redirect unauthenticated users to login with reason
                 redirectToLogin('Welcome! Please log in to access the helpdesk system.');
             }
         }
-    }, [isAuthenticated, isLoading, isInitializing, redirectToLogin, redirectToWorkspaces]);
+    }, [isAuthenticated, isLoading, isInitializing, redirectToLogin]);
 
     // Show loading while determining where to redirect
     return (

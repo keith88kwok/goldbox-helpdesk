@@ -165,4 +165,97 @@ export async function exportTicketsAction(
         console.error('Error exporting tickets:', error);
         throw new Error('Failed to export tickets. Please try again.');
     }
+}
+
+/**
+ * Server action to export tickets data from all accessible workspaces for CSV download
+ * Fetches filtered tickets across workspaces with enhanced information for export
+ */
+export async function exportGlobalTicketsAction(
+    userId: string,
+    filters: {
+        searchTerm?: string;
+        status?: string;
+        dateFrom?: string;
+        dateTo?: string;
+        assigneeId?: string;
+        workspaceId?: string;
+        onlyMyTickets?: boolean;
+    } = {}
+): Promise<{
+    tickets: (TicketExportData & { workspaceName: string })[];
+    workspaces: { id: string; name: string }[];
+    totalCount: number;
+    filteredCount: number;
+}> {
+    try {
+        // Import here to avoid circular dependencies
+        const { getAllUserAccessibleTickets } = await import('./ticket-utils');
+
+        // Get filtered tickets across all workspaces
+        const { tickets: globalTickets, workspaces } = await getAllUserAccessibleTickets(userId, {
+            searchTerm: filters.searchTerm,
+            status: filters.status as any,
+            dateFrom: filters.dateFrom,
+            dateTo: filters.dateTo,
+            assigneeId: filters.assigneeId,
+            workspaceId: filters.workspaceId,
+            onlyMyTickets: filters.onlyMyTickets,
+            useMaintenance: true
+        });
+
+        const totalCount = globalTickets.length;
+
+        // Format date helper
+        const formatDate = (dateString: string | null | undefined): string => {
+            if (!dateString) return 'Not set';
+            try {
+                return new Date(dateString).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZoneName: 'short'
+                });
+            } catch {
+                return 'Invalid date';
+            }
+        };
+
+        // Transform tickets to export format with workspace information
+        const exportTickets = globalTickets.map((ticket) => {
+            const commentsCount = Array.isArray(ticket.comments) ? ticket.comments.length : 0;
+
+            return {
+                ticketId: ticket.ticketId,
+                title: ticket.title,
+                description: ticket.description,
+                status: ticket.status || 'OPEN',
+                workspaceName: ticket.workspaceName,
+                kioskAddress: ticket.kioskAddress,
+                kioskDescription: ticket.kioskDescription,
+                reporterName: ticket.reporterName || 'Unknown user',
+                assigneeName: ticket.assigneeName || 'Unassigned',
+                reportedDate: formatDate(ticket.reportedDate),
+                scheduledDate: formatDate(ticket.maintenanceTime),
+                updatedDate: formatDate(ticket.updatedDate),
+                commentsCount
+            };
+        });
+
+        return {
+            tickets: exportTickets,
+            workspaces: workspaces.map(w => ({ 
+                id: w.id, 
+                name: w.name 
+            })),
+            totalCount,
+            filteredCount: totalCount
+        };
+
+    } catch (error) {
+        console.error('Error exporting global tickets:', error);
+        throw new Error('Failed to export tickets. Please try again.');
+    }
 } 

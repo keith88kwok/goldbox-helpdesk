@@ -41,8 +41,17 @@ export function useRedirect() {
         });
     };
 
+    const redirectToDashboard = (reason: string = 'Dashboard access') => {
+        redirectWithReason('/dashboard', {
+            reason,
+            description: 'Redirecting to your dashboard.',
+            showUserConfirmation: true
+        });
+    };
+
+    // Keep for backward compatibility but redirect to dashboard
     const redirectToWorkspaces = (reason: string = 'Workspace access required') => {
-        redirectWithReason('/workspaces', {
+        redirectWithReason('/dashboard', {
             reason,
             description: 'Please select a workspace to continue.',
             showUserConfirmation: true
@@ -60,7 +69,8 @@ export function useRedirect() {
     return {
         redirectWithReason,
         redirectToLogin,
-        redirectToWorkspaces,
+        redirectToDashboard,
+        redirectToWorkspaces, // Kept for backward compatibility
         redirectWithError,
         isRedirecting
     };

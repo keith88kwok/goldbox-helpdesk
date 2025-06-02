@@ -1,4 +1,4 @@
-import { getWorkspaceAccess, validateWorkspaceAccess, type SelectedWorkspace } from './workspace-utils';
+import { getWorkspaceAccess, validateWorkspaceAccess, getUserWorkspaces, type SelectedWorkspace } from './workspace-utils';
 import { cookiesClient, type Schema } from '@/utils/amplify-utils';
 import { 
     getCurrentMonthRange, 
@@ -493,4 +493,148 @@ export async function getWorkspaceUsers(workspaceId: string): Promise<{
         email: string;
         role: string;
     }[];
+}
+
+/**
+ * Get tickets across all accessible workspaces with enhanced filtering
+ */
+export async function getAllUserAccessibleTickets(
+    userId: string,
+    filters?: {
+        searchTerm?: string;
+        status?: TicketStatus;
+        assigneeId?: string;
+        workspaceId?: string;
+        dateFrom?: string;
+        dateTo?: string;
+        onlyMyTickets?: boolean;
+        useMaintenance?: boolean;
+    }
+): Promise<{
+    tickets: (SelectedTicket & { 
+        workspaceName: string; 
+        kioskAddress: string; 
+        kioskDescription: string;
+    })[];
+    workspaces: SelectedWorkspace[];
+    totalCount: number;
+}> {
+    // Get all user's accessible workspaces
+    const userWorkspaces = await getUserWorkspaces();
+    
+    if (userWorkspaces.length === 0) {
+        return {
+            tickets: [],
+            workspaces: [],
+            totalCount: 0
+        };
+    }
+
+    // Filter workspaces if specific workspace requested
+    const targetWorkspaces = filters?.workspaceId 
+        ? userWorkspaces.filter((uw: { workspace: SelectedWorkspace; role: string; joinedAt: string }) => uw.workspace.id === filters.workspaceId)
+        : userWorkspaces;
+
+    if (targetWorkspaces.length === 0) {
+        return {
+            tickets: [],
+            workspaces: userWorkspaces.map((uw: { workspace: SelectedWorkspace; role: string; joinedAt: string }) => uw.workspace),
+            totalCount: 0
+        };
+    }
+
+    // Get tickets from all target workspaces in parallel
+    const workspaceTicketsPromises = targetWorkspaces.map(async (userWorkspace: { workspace: SelectedWorkspace; role: string; joinedAt: string }) => {
+        try {
+            // Build filter conditions for each workspace
+            const workspaceFilters: Parameters<typeof searchTickets>[1] = {
+                useMaintenance: filters?.useMaintenance || true
+            };
+
+            // Apply filters
+            if (filters?.searchTerm) workspaceFilters.searchTerm = filters.searchTerm;
+            if (filters?.status) workspaceFilters.status = filters.status;
+            if (filters?.assigneeId) workspaceFilters.assigneeId = filters.assigneeId;
+            if (filters?.dateFrom) workspaceFilters.dateFrom = filters.dateFrom;
+            if (filters?.dateTo) workspaceFilters.dateTo = filters.dateTo;
+            if (filters?.onlyMyTickets) workspaceFilters.assigneeId = userId;
+
+            const { tickets } = await searchTickets(userWorkspace.workspace.id, workspaceFilters);
+            
+            return {
+                workspace: userWorkspace.workspace,
+                tickets
+            };
+        } catch (error) {
+            console.error(`Error fetching tickets for workspace ${userWorkspace.workspace.id}:`, error);
+            return {
+                workspace: userWorkspace.workspace,
+                tickets: []
+            };
+        }
+    });
+
+    const workspaceTickets = await Promise.all(workspaceTicketsPromises);
+
+    // Get all kiosks for address mapping
+    const allKiosksPromises = targetWorkspaces.map(async (userWorkspace: { workspace: SelectedWorkspace; role: string; joinedAt: string }) => {
+        try {
+            const { data: kiosks } = await cookiesClient.models.Kiosk.list({
+                filter: {
+                    workspaceId: { eq: userWorkspace.workspace.id }
+                }
+            });
+            return {
+                workspaceId: userWorkspace.workspace.id,
+                kiosks: kiosks || []
+            };
+        } catch (error) {
+            console.error(`Error fetching kiosks for workspace ${userWorkspace.workspace.id}:`, error);
+            return {
+                workspaceId: userWorkspace.workspace.id,
+                kiosks: []
+            };
+        }
+    });
+
+    const workspaceKiosks = await Promise.all(allKiosksPromises);
+    
+    // Create kiosk lookup map
+    const kioskMap = new Map<string, { address: string; description: string }>();
+    workspaceKiosks.forEach((wk: { workspaceId: string; kiosks: any[] }) => {
+        wk.kiosks.forEach((kiosk: any) => {
+            kioskMap.set(kiosk.id, {
+                address: kiosk.address || 'Unknown address',
+                description: kiosk.description || ''
+            });
+        });
+    });
+
+    // Combine all tickets with workspace and kiosk information
+    const enhancedTickets = workspaceTickets.flatMap((wt: { workspace: SelectedWorkspace; tickets: SelectedTicket[] }) => 
+        wt.tickets.map((ticket: SelectedTicket) => {
+            const kioskInfo = kioskMap.get(ticket.kioskId) || { 
+                address: 'Unknown kiosk', 
+                description: '' 
+            };
+            
+            return {
+                ...ticket,
+                workspaceName: wt.workspace.name,
+                kioskAddress: kioskInfo.address,
+                kioskDescription: kioskInfo.description
+            };
+        })
+    );
+
+    // Sort by reported date (most recent first)
+    enhancedTickets.sort((a: any, b: any) => 
+        new Date(b.reportedDate).getTime() - new Date(a.reportedDate).getTime()
+    );
+
+    return {
+        tickets: enhancedTickets,
+        workspaces: userWorkspaces.map((uw: { workspace: SelectedWorkspace; role: string; joinedAt: string }) => uw.workspace),
+        totalCount: enhancedTickets.length
+    };
 } 
